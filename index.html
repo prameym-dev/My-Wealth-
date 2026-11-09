@@ -14,7 +14,7 @@
   <div class="app-shell">
     <header class="topbar">
       <div class="brand"><div class="brand-mark">MW</div><div><strong>MY WEALTH</strong><small>Personal finance</small></div></div>
-      <div class="top-actions"><span class="currency-pill">₹ INR</span><button id="syncBtn" class="icon-btn" aria-label="Sync status">☁</button></div>
+      <div class="top-actions"><button id="topSettingsBtn" class="icon-btn settings-top-btn" aria-label="Settings">⚙</button></div>
     </header>
 
     <main>
@@ -37,7 +37,7 @@
 
       <section id="transactions" class="page">
         <div class="page-heading"><div><p class="eyebrow">MONEY IN & OUT</p><h1>Transactions</h1></div><button class="primary-btn" id="addTransactionBtn">＋ Add</button></div>
-        <div class="toolbar"><input id="transactionSearch" placeholder="Search transactions"><select id="transactionFilter"><option>All</option><option>Income</option><option>Expense</option></select></div>
+        <div class="toolbar"><input id="transactionSearch" placeholder="Search transactions"><select id="transactionFilter" aria-label="Filter transactions"><option>All</option><option>Income</option><option>Expense</option><option>Transfer</option></select><select id="transactionSort" aria-label="Sort transactions"><option value="newest">Latest first</option><option value="oldest">Oldest first</option><option value="highest">Highest amount</option><option value="lowest">Lowest amount</option></select></div>
         <div id="transactionList" class="list-card empty">No transactions recorded.</div>
       </section>
 
@@ -85,7 +85,7 @@
           <button class="secondary-btn" id="syncNowBtn">Sync now</button>
         </article>
         <article class="settings-card">
-          <h2>Bluecoins migration</h2><p class="hint">Import the prepared MyWealth_Bluecoins_Import.json file. All 5,233 source records are retained, including reminders and special flags. Review the preview before confirming.</p><label class="secondary-btn file-button">Choose Bluecoins JSON<input type="file" id="bluecoinsInput" accept=".json,application/json"></label><div id="bluecoinsPreview" class="hint">No Bluecoins file selected.</div><button class="primary-btn" id="confirmBluecoinsBtn" disabled>Import Bluecoins history</button>
+          <h2>Bluecoins migration</h2><p class="hint">Import the prepared MyWealth_Bluecoins_Import.json file. All 5,233 source records are retained, including reminders and special flags. Review the preview before confirming.</p><label class="secondary-btn file-button">Choose Bluecoins JSON<input type="file" id="bluecoinsInput" accept=".json,application/json"></label><div id="bluecoinsPreview" class="hint">No Bluecoins file selected.</div><button class="primary-btn" id="confirmBluecoinsBtn" disabled>Import Bluecoins history</button><p class="hint">Amounts are normalized automatically during import. Older imports with the previous scale issue are corrected once when this app version loads.</p>
         </article>
         <article class="settings-card">
           <h2>Backup & restore</h2>
@@ -111,7 +111,7 @@
       <button class="tab" data-tab="wealth"><span>◈</span><small>Wealth</small></button>
       <button class="tab" data-tab="budgets"><span>◎</span><small>Budgets</small></button>
       <button class="tab" data-tab="reports"><span>▥</span><small>Reports</small></button>
-      <button class="tab" data-tab="settings"><span>⚙</span><small>Settings</small></button>
+      
     </nav>
   </div>
 
@@ -124,7 +124,7 @@
       <label>Amount (₹)<input id="entryAmount" type="number" min="0.01" step="0.01" placeholder="0.00" required></label>
       <label>Category<select id="entryCategory" required></select></label>
       <label>Date<input id="entryDate" type="date" required></label>
-      <label>Description<input id="entryNote" maxlength="120" placeholder="Optional"></label>
+      <label>Account<select id="entryAccount"><option value="">No account</option></select></label><label>Description<input id="entryNote" maxlength="120" placeholder="Optional"></label>
       <label class="check-label"><input id="entryRecurring" type="checkbox"> Recurring transaction</label>
       <button class="primary-btn" type="submit">Save transaction</button>
     </form>
