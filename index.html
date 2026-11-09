@@ -44,6 +44,7 @@
       <section id="wealth" class="page">
         <div class="page-heading"><div><p class="eyebrow">WHAT YOU OWN & OWE</p><h1>My wealth</h1></div></div>
         <article class="summary-strip"><span>Estimated net worth</span><strong id="wealthNet">₹0</strong></article>
+        <div class="section-heading"><h2>Accounts & wallets</h2><button class="primary-btn small" id="addAccountBtn">＋ Add account</button></div><div id="accountList" class="list-card empty">No accounts added yet.</div>
         <div class="section-heading"><h2>Assets</h2><button class="primary-btn small" id="addAssetBtn">＋ Add asset</button></div>
         <div id="assetList" class="list-card empty">No assets added yet.</div>
         <div class="section-heading"><h2>Liabilities</h2><button class="primary-btn small" id="addDebtBtn">＋ Add debt</button></div>
@@ -84,6 +85,9 @@
           <button class="secondary-btn" id="syncNowBtn">Sync now</button>
         </article>
         <article class="settings-card">
+          <h2>Bluecoins migration</h2><p class="hint">Import the prepared MyWealth_Bluecoins_Import.json file. All 5,233 source records are retained, including reminders and special flags. Review the preview before confirming.</p><label class="secondary-btn file-button">Choose Bluecoins JSON<input type="file" id="bluecoinsInput" accept=".json,application/json"></label><div id="bluecoinsPreview" class="hint">No Bluecoins file selected.</div><button class="primary-btn" id="confirmBluecoinsBtn" disabled>Import Bluecoins history</button>
+        </article>
+        <article class="settings-card">
           <h2>Backup & restore</h2>
           <p class="hint">Export a CSV backup of transactions or a complete JSON backup of this device's data.</p>
           <div class="button-row"><button class="secondary-btn" id="exportCsvBtn">Export transactions CSV</button><button class="secondary-btn" id="exportJsonBtn">Export full backup</button></div>
@@ -109,6 +113,8 @@
       <button class="tab" data-tab="reports"><span>▥</span><small>Reports</small></button>
     </nav>
   </div>
+
+  <dialog id="accountDialog"><form id="accountForm" class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">BANKS & WALLETS</p><h2>Add account</h2></div><button type="button" class="close-btn" data-close="accountDialog">×</button></div><label>Account name<input id="accountName" required placeholder="e.g. HDFC Savings"></label><label>Account type<select id="accountType"><option>Bank</option><option>Cash</option><option>Wallet</option><option>Credit card</option><option>Investment</option><option>Other</option></select></label><label>Opening balance (₹)<input id="accountOpening" type="number" step="0.01" value="0"></label><button class="primary-btn">Save account</button></form></dialog>
 
   <dialog id="entryDialog">
     <form id="transactionForm" class="dialog-form">
