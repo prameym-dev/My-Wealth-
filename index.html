@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#102a26">
   <meta name="description" content="My Wealth — personal finance and portfolio tracker">
   <title>My Wealth</title>
@@ -77,6 +77,9 @@
       <section id="settings" class="page">
         <div class="page-heading"><div><p class="eyebrow">PREFERENCES & DATA</p><h1>Settings</h1></div></div>
         <article class="settings-card">
+          <h2>Appearance</h2><label>Theme<select id="themeSelect"><option value="system">System default</option><option value="light">Light</option><option value="dark">Dark</option></select></label><p class="hint">Choose how My Wealth looks on this device.</p>
+        </article>
+        <article class="settings-card">
           <h2>Cloud sync</h2>
           <p id="cloudStatus" class="status-line">Not configured · Local-only mode</p>
           <p class="hint">Cloud sync uses your own Supabase project. Your public project URL and anon key are stored in this app; Row Level Security protects each account's records. Never put a service-role key here.</p>
@@ -126,7 +129,7 @@
       <label>Date<input id="entryDate" type="date" required></label>
       <label>Account<select id="entryAccount"><option value="">No account</option></select></label><label>Description<input id="entryNote" maxlength="120" placeholder="Optional"></label>
       <label class="check-label"><input id="entryRecurring" type="checkbox"> Recurring transaction</label>
-      <button class="primary-btn" type="submit">Save transaction</button>
+      <div class="button-row"><button class="secondary-btn" type="button" id="cancelEntryBtn">Cancel</button><button class="primary-btn" type="submit" id="saveEntryBtn">Save transaction</button></div>
     </form>
   </dialog>
 
