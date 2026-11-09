@@ -8,6 +8,8 @@ let currentKind = "Expense";
 let supabase = null;
 let session = null;
 let pendingBluecoins=null;
+// Safety snapshot: preserve a non-empty prior dataset before any migration/update logic runs.
+try{const raw=localStorage.getItem(STORE_KEY);if(raw){const parsed=JSON.parse(raw);const hasRecords=["transactions","accounts","assets","liabilities","budgets"].some(k=>Array.isArray(parsed[k])&&parsed[k].length);if(hasRecords&&!localStorage.getItem("mywealth-preupdate-backup-v1"))localStorage.setItem("mywealth-preupdate-backup-v1",raw);}}catch(e){console.warn("My Wealth safety snapshot skipped",e);}
 
 function emptyState(){return {transactions:[],assets:[],liabilities:[],budgets:[],accounts:[],categories:[],bluecoinsMeta:null};}
 function loadState(){try{return {...emptyState(),...JSON.parse(localStorage.getItem(STORE_KEY)||"{}")};}catch{return emptyState();}}
@@ -23,6 +25,7 @@ function inMonth(date,month){return String(date||"").slice(0,7)===month;}
 function options(el,values,selected){el.innerHTML=values.map(v=>`<option ${v===selected?"selected":""}>${esc(v)}</option>`).join("");}
 function nav(page){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===page));if(page==="settings")updateCloudStatus();render();}
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.tab)));
+const topSettingsButton=$("topSettingsBtn");if(topSettingsButton)topSettingsButton.addEventListener("click",()=>nav("settings"));
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.go)));
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>$(b.dataset.close).close()));
 document.querySelectorAll("[data-kind]").forEach(b=>b.addEventListener("click",()=>{currentKind=b.dataset.kind;document.querySelectorAll("[data-kind]").forEach(x=>x.classList.toggle("selected",x===b));options($("entryCategory"),currentKind==="Expense"?EXPENSES:INCOMES,currentKind==="Expense"?"Food":"Salary");}));
@@ -39,15 +42,15 @@ $("debtForm").addEventListener("submit",e=>{e.preventDefault();const value=Numbe
 $("budgetForm").addEventListener("submit",e=>{e.preventDefault();const limit=Number($("budgetLimit").value),category=$("budgetCategory").value;if(!limit||limit<=0)return;state.budgets=state.budgets.filter(b=>b.category!==category);state.budgets.push({id:id(),category,limit});persist();$("budgetLimit").value="";toast("Budget saved");});
 $("dashMonth").addEventListener("change",render);$("budgetMonth").addEventListener("change",render);$("reportMonth").addEventListener("change",render);$("transactionSearch").addEventListener("input",render);$("transactionFilter").addEventListener("change",render);$("transactionSort").addEventListener("change",render);
 function accountMatches(ref,a){return String(ref??"")===String(a.id)||String(ref??"")===String(a.sourceId??"__none__");}
-function accountBalance(a){let bal=Number(a.openingBalance)||0;for(const t of state.transactions){const amt=Math.abs(Number(t.amount)||0);if(t.kind==="Transfer"){if(accountMatches(t.accountId,a))bal-=amt;if(accountMatches(t.counterAccountId,a))bal+=amt;}else if(accountMatches(t.accountId,a)){if(t.kind==="Income")bal+=amt;else if(t.kind==="Expense")bal-=amt;}}return bal;}
+function accountBalance(a){let bal=Number(a.openingBalance)||0;for(const t of state.transactions){if(t.isReminder)continue;const amt=Math.abs(Number(t.amount)||0);if(t.kind==="Transfer"){if(accountMatches(t.accountId,a))bal-=amt;if(accountMatches(t.counterAccountId,a))bal+=amt;}else if(accountMatches(t.accountId,a)){if(t.kind==="Income")bal+=amt;else if(t.kind==="Expense")bal-=amt;}}return bal;}
 function refreshAccountSelect(){const el=$("entryAccount");if(!el)return;const active=(state.accounts||[]).filter(a=>!a.closed);el.innerHTML='<option value="">No account</option>'+active.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join("");}
 function render(){
  refreshAccountSelect();
  const assets=sum(state.assets,x=>x.value)+sum((state.accounts||[]).filter(a=>!a.closed),a=>accountBalance(a)),debts=sum(state.liabilities,x=>x.value),month=$("dashMonth").value||monthKey(),mTx=state.transactions.filter(x=>inMonth(x.date,month)),inc=sum(mTx.filter(x=>x.kind==="Income"),x=>x.amount),exp=sum(mTx.filter(x=>x.kind==="Expense"),x=>x.amount);
  $("netWorth").textContent=money(assets-debts);$("assetTotal").textContent=money(assets);$("debtTotal").textContent=money(debts);$("monthIncome").textContent=money(inc);$("monthExpense").textContent=money(exp);$("monthSavings").textContent=money(inc-exp);$("monthSavings").style.color=inc>=exp?"#208357":"#a44c43";$("wealthNet").textContent=money(assets-debts);
- $("recentList").className="list-card"+(state.transactions.length?"":" empty");$("recentList").innerHTML=state.transactions.length?state.transactions.slice(0,5).map(txRow).join(""):empty("No activity yet. Add your first transaction.");
+ $("recentList").className="list-card"+(state.transactions.length?"":" empty");$("recentList").innerHTML=state.transactions.length?state.transactions.filter(t=>!t.isReminder).slice(0,5).map(txRow).join(""):empty("No activity yet. Add your first transaction.");
  const q=($("transactionSearch").value||"").toLowerCase(),filter=$("transactionFilter").value,sort=$("transactionSort").value;
- let filtered=state.transactions.filter(t=>(filter==="All"||t.kind===filter)&&(`${t.category} ${t.note} ${t.account||""}`.toLowerCase().includes(q)));
+ let filtered=state.transactions.filter(t=>!t.isReminder&&(filter==="All"||t.kind===filter)&&(`${t.category} ${t.note} ${t.account||""}`.toLowerCase().includes(q)));
  filtered.sort((a,b)=>sort==="oldest"?String(a.date).localeCompare(String(b.date)):sort==="highest"?Number(b.amount)-Number(a.amount):sort==="lowest"?Number(a.amount)-Number(b.amount):String(b.date).localeCompare(String(a.date)));
  const grouped={};filtered.forEach(t=>{const k=String(t.date||"").slice(0,7)||"Undated";(grouped[k] ||= []).push(t);});
  const monthLabel=k=>{if(k==="Undated")return k;const [y,m]=k.split("-").map(Number);return new Date(y,m-1,1).toLocaleDateString("en-IN",{month:"long",year:"numeric"});};
@@ -76,7 +79,7 @@ function download(name,content,type){const blob=new Blob([content],{type}),url=U
 // One-time automatic correction for legacy imports that were saved 10,000x too high.
 (function repairLegacyBluecoinsAmounts(){const legacy=state.transactions.filter(t=>t.source==="Bluecoins"&&t.sourceRecord&&!t.amountScaleCorrected);if(legacy.length){legacy.forEach(t=>{t.amount=Number(t.amount)/10000;t.amountScaleCorrected=true;});if(state.bluecoinsMeta)state.bluecoinsMeta.amountScaleCorrectedAt=new Date().toISOString();localStorage.setItem(STORE_KEY,JSON.stringify(state));render();}})();
 
-$("exportCsvBtn").onclick=()=>{const rows=[["date","description","amount","type","category"],...state.transactions.map(t=>[t.date,t.note,t.kind==="Income"?t.amount:-t.amount,t.kind,t.category])];download("my-wealth-transactions.csv",rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv");};
+$("exportCsvBtn").onclick=()=>{const rows=[["date","description","amount","type","category"],...state.transactions.filter(t=>!t.isReminder).map(t=>[t.date,t.note,t.kind==="Income"?t.amount:-t.amount,t.kind,t.category])];download("my-wealth-transactions.csv",rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv");};
 function csvCell(v){return `"${String(v??"").replace(/"/g,'""')}"`;}
 $("exportJsonBtn").onclick=()=>download("my-wealth-backup.json",JSON.stringify(state,null,2),"application/json");
 $("restoreJsonInput").onchange=async e=>{try{const obj=JSON.parse(await e.target.files[0].text());if(!obj||!Array.isArray(obj.transactions)||!Array.isArray(obj.assets)||!Array.isArray(obj.liabilities)||!Array.isArray(obj.budgets))throw Error("Invalid backup structure");if(!confirm("Replace all current local data with this backup?"))return;state=obj;persist();toast("Backup restored");}catch(err){toast("Restore failed: "+err.message);}e.target.value="";};
