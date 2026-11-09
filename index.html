@@ -38,7 +38,7 @@
       <section id="transactions" class="page">
         <div class="page-heading"><div><p class="eyebrow">MONEY IN & OUT</p><h1>Transactions</h1></div><button class="primary-btn" id="addTransactionBtn">＋ Add</button></div>
         <div class="toolbar"><input id="transactionSearch" placeholder="Search transactions"><button class="secondary-btn" id="advancedFilterBtn">Advanced filters</button><button class="text-btn" id="clearAccountFilterBtn" hidden>Clear account</button></div><div id="activeFilterSummary" class="hint"></div>
-        <div id="transactionList" class="list-card empty">No transactions recorded.</div>
+        <div class="bulk-toolbar" id="bulkToolbar"><label><input type="checkbox" id="selectAllTx"> Select all</label><span id="selectedTxCount">0 selected</span><button class="secondary-btn" id="bulkDeleteBtn" type="button">Delete selected</button></div><div id="transactionList" class="list-card empty">No transactions recorded.</div>
       </section>
 
       <section id="wealth" class="page">
@@ -62,7 +62,7 @@
           <button class="primary-btn" type="submit">Save budget</button>
         </form>
         <div class="section-heading"><h2>Budget performance</h2></div>
-        <div id="budgetList" class="budget-stack empty">No budgets set yet.</div>
+        <div id="budgetList" class="budget-stack empty">No budgets set yet.</div><div class="section-heading"><h2>Income summary</h2></div><div id="budgetIncomeSummary" class="list-card"></div>
       </section>
 
       <section id="reports" class="page">
@@ -77,9 +77,8 @@
       <section id="settings" class="page">
         <div class="page-heading"><div><p class="eyebrow">PREFERENCES & DATA</p><h1>Settings</h1></div></div>
         <article class="settings-card">
-          <h2>Appearance</h2><label>Theme<select id="themeSelect"><option value="system">System default</option><option value="light">Light</option><option value="dark">Dark</option><option value="blue">Blue</option><option value="navy">Dark blue</option></select></label><p class="hint">Choose how My Wealth looks on this device.</p>
+          <h2>Appearance</h2><label>Display mode<select id="themeSelect"><option value="system">Follow device</option><option value="light">Light</option><option value="dark">Dark</option></select></label><label>Accent colour<select id="accentSelect"><option value="green">Green</option><option value="blue">Blue</option><option value="teal">Teal</option><option value="purple">Purple</option><option value="orange">Orange</option></select></label><p class="hint">Display mode and accent colour are independent preferences.</p>
         </article>
-        <article class="settings-card"><h2>Categories</h2><p class="hint">Create, rename or remove your own income and expense categories.</p><button class="secondary-btn" id="manageCategoriesBtn">Manage categories</button><div id="categoryManagerList"></div></article>
         <article class="settings-card"><h2>Categories</h2><p class="hint">Create, rename or remove your own income and expense categories.</p><button class="secondary-btn" id="manageCategoriesBtn">Manage categories</button><div id="categoryManagerList"></div></article>
         <article class="settings-card">
           <h2>Cloud sync</h2>
@@ -121,11 +120,13 @@
   </div>
 
 
+  <dialog id="transactionDetailDialog"><div class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">TRANSACTION</p><h2 id="detailTitle">Activity details</h2></div><button type="button" class="close-btn" data-close="transactionDetailDialog">×</button></div><div id="transactionDetailBody"></div><div class="button-row"><button type="button" class="secondary-btn" id="detailEditBtn">Edit</button><button type="button" class="secondary-btn" id="detailCopyBtn">Copy</button><button type="button" class="danger-btn" id="detailDeleteBtn">Delete</button></div></div></dialog>
+  <dialog id="budgetTransactionsDialog"><div class="dialog-form"><div class="dialog-header"><h2 id="budgetTransactionsTitle">Category transactions</h2><button type="button" class="close-btn" data-close="budgetTransactionsDialog">×</button></div><div id="budgetTransactionsList"></div></div></dialog>
   <dialog id="filterDialog"><form id="filterForm" class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">FIND TRANSACTIONS</p><h2>Advanced filters</h2></div><button type="button" class="close-btn" data-close="filterDialog">×</button></div><label>Account<select id="filterAccount"><option value="">All accounts</option></select></label><label>Type<select id="filterType"><option value="All">All types</option><option>Income</option><option>Expense</option><option>Transfer</option></select></label><label>Category<select id="filterCategory"><option value="">All categories</option></select></label><label>Sort by<select id="filterSort"><option value="newest">Latest first</option><option value="oldest">Oldest first</option><option value="highest">Highest amount</option><option value="lowest">Lowest amount</option></select></label><label>From date<input id="filterFrom" type="date"></label><label>To date<input id="filterTo" type="date"></label><div class="button-row"><button class="secondary-btn" type="button" id="resetActivityFilters">Reset</button><button class="primary-btn" type="submit">Apply filters</button></div></form></dialog>
   <dialog id="categoryDialog"><form id="categoryForm" class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">PERSONALISE</p><h2>Manage categories</h2></div><button type="button" class="close-btn" data-close="categoryDialog">×</button></div><label>Category type<select id="categoryKind"><option>Expense</option><option>Income</option></select></label><label>Category name<input id="categoryName" maxlength="40" required placeholder="e.g. Pet care"></label><button class="primary-btn" type="submit">Add category</button><div id="categoryListEditor"></div></form></dialog>
 
-  <dialog id="filterDialog"><form id="filterForm" class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">FIND TRANSACTIONS</p><h2>Advanced filters</h2></div><button type="button" class="close-btn" data-close="filterDialog">×</button></div><label>Account<select id="filterAccount"><option value="">All accounts</option></select></label><label>Type<select id="filterType"><option value="All">All types</option><option>Income</option><option>Expense</option><option>Transfer</option></select></label><label>Category<select id="filterCategory"><option value="">All categories</option></select></label><label>Sort by<select id="filterSort"><option value="newest">Latest first</option><option value="oldest">Oldest first</option><option value="highest">Highest amount</option><option value="lowest">Lowest amount</option></select></label><label>From date<input id="filterFrom" type="date"></label><label>To date<input id="filterTo" type="date"></label><div class="button-row"><button class="secondary-btn" type="button" id="resetActivityFilters">Reset</button><button class="primary-btn" type="submit">Apply filters</button></div></form></dialog>
-  <dialog id="categoryDialog"><form id="categoryForm" class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">PERSONALISE</p><h2>Manage categories</h2></div><button type="button" class="close-btn" data-close="categoryDialog">×</button></div><label>Category type<select id="categoryKind"><option>Expense</option><option>Income</option></select></label><label>Category name<input id="categoryName" maxlength="40" required placeholder="e.g. Pet care"></label><button class="primary-btn" type="submit">Add category</button><div id="categoryListEditor"></div></form></dialog>
+
+
   <dialog id="accountDialog"><form id="accountForm" class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">BANKS & WALLETS</p><h2>Add account</h2></div><button type="button" class="close-btn" data-close="accountDialog">×</button></div><label>Account name<input id="accountName" required placeholder="e.g. HDFC Savings"></label><label>Account type<select id="accountType"><option>Bank</option><option>Cash</option><option>Wallet</option><option>Credit card</option><option>Investment</option><option>Other</option></select></label><label>Opening balance (₹)<input id="accountOpening" type="number" step="0.01" value="0"></label><button class="primary-btn">Save account</button></form></dialog>
 
   <dialog id="entryDialog">
