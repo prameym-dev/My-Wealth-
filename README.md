@@ -1,11 +1,23 @@
-# My Wealth PWA – IndexedDB storage update
+# My Wealth — Dashboard, Filters, Budgets, Reports & Categories update
 
-This build moves the primary finance dataset from localStorage to IndexedDB (`mywealth-db`, object store `finance`, key `app-state`). On first launch it migrates the existing `mywealth-v1` localStorage dataset into IndexedDB if no IndexedDB dataset exists. Large Bluecoins imports are written in batches of 200 records; each batch is committed before progress advances. Re-importing after an interrupted import skips records already present by Bluecoins source ID.
+This update keeps the existing IndexedDB database (`mywealth-db`, store `finance`, key `app-state`) and the current Bluecoins import data model. It does not require re-importing Bluecoins.
+
+## Included
+- Compact Home dashboard: smaller net-worth card, one-line income/expense metrics, three recent entries and a fixed-height Home view on iPhone.
+- Activity advanced filters: account, transaction type, category, date range and sort order. Account filter can be cleared from Activity.
+- Budgets: one Set / edit budgets control, with compact two-column budget cards.
+- Reports: date range, account, type and category filters; income/expense trend chart; category spend breakdown; account activity; portfolio allocation.
+- Appearance palettes: existing system/light/dark plus blue and dark blue.
+- Category manager: add, rename and hide/remove categories from future selection. Existing transactions retain their category text unless renamed.
 
 ## Deploy
-Upload the contents of this folder to the root of the existing GitHub Pages repository, replacing matching files. Keep the existing `icons/` folder. Commit changes and wait for Pages to publish. The service-worker cache version has been incremented to force refreshed app assets.
+1. Extract this ZIP.
+2. Upload the contents of `mwbuild/` to the root of your existing GitHub Pages repository, replacing matching files.
+3. Keep the existing `icons/` folder and files.
+4. Commit changes and wait for GitHub Pages to deploy.
+5. Close and reopen My Wealth. The service worker cache has been bumped.
 
-## Important
-- Do not clear Safari website data or delete the Home Screen app before confirming that existing records have migrated.
-- IndexedDB has substantially more capacity than localStorage, but browser/device storage can still be cleared or evicted. Use the JSON backup/export regularly.
-- If an import is interrupted, select the same Bluecoins JSON again; source IDs already saved are skipped.
+## Data safety
+- No database reset or Bluecoins re-import is required.
+- IndexedDB database and object-store names are unchanged.
+- As always, export a full JSON backup before deploying app updates.
