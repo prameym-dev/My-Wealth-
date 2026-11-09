@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#102a26">
+  <meta name="description" content="My Wealth — personal finance and portfolio tracker">
+  <title>My Wealth</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark">MW</div><div><strong>MY WEALTH</strong><small>Personal finance</small></div></div>
+      <div class="top-actions"><span class="currency-pill">₹ INR</span><button id="syncBtn" class="icon-btn" aria-label="Sync status">☁</button></div>
+    </header>
+
+    <main>
+      <section id="dashboard" class="page active">
+        <div class="welcome"><div><p class="eyebrow">YOUR FINANCIAL OVERVIEW</p><h1>Good to see you.</h1></div><div class="date-chip" id="todayLabel"></div></div>
+        <article class="networth-card">
+          <div class="card-top"><span>NET WORTH</span><span class="live-dot">● TRACKED</span></div>
+          <div class="big-number" id="netWorth">₹0</div>
+          <div class="nw-grid"><div><small>Total assets</small><strong id="assetTotal">₹0</strong></div><div><small>Liabilities</small><strong id="debtTotal">₹0</strong></div></div>
+        </article>
+        <div class="section-heading"><h2>Cash flow</h2><input id="dashMonth" type="month" aria-label="Dashboard month"></div>
+        <div class="metric-grid">
+          <article class="metric"><span class="metric-icon income-icon">↙</span><small>Income</small><strong id="monthIncome">₹0</strong></article>
+          <article class="metric"><span class="metric-icon expense-icon">↗</span><small>Expenses</small><strong id="monthExpense">₹0</strong></article>
+        </div>
+        <article class="cashflow"><span>Monthly net savings</span><strong id="monthSavings">₹0</strong></article>
+        <div class="section-heading"><h2>Recent activity</h2><button class="text-btn" data-go="transactions">See all</button></div>
+        <div id="recentList" class="list-card empty">No activity yet. Add your first transaction.</div>
+      </section>
+
+      <section id="transactions" class="page">
+        <div class="page-heading"><div><p class="eyebrow">MONEY IN & OUT</p><h1>Transactions</h1></div><button class="primary-btn" id="addTransactionBtn">＋ Add</button></div>
+        <div class="toolbar"><input id="transactionSearch" placeholder="Search transactions"><select id="transactionFilter"><option>All</option><option>Income</option><option>Expense</option></select></div>
+        <div id="transactionList" class="list-card empty">No transactions recorded.</div>
+      </section>
+
+      <section id="wealth" class="page">
+        <div class="page-heading"><div><p class="eyebrow">WHAT YOU OWN & OWE</p><h1>My wealth</h1></div></div>
+        <article class="summary-strip"><span>Estimated net worth</span><strong id="wealthNet">₹0</strong></article>
+        <div class="section-heading"><h2>Assets</h2><button class="primary-btn small" id="addAssetBtn">＋ Add asset</button></div>
+        <div id="assetList" class="list-card empty">No assets added yet.</div>
+        <div class="section-heading"><h2>Liabilities</h2><button class="primary-btn small" id="addDebtBtn">＋ Add debt</button></div>
+        <div id="debtList" class="list-card empty">No liabilities added yet.</div>
+        <p class="hint">Investment values are entered manually. Live market prices, cost basis and returns are not fetched automatically.</p>
+      </section>
+
+      <section id="budgets" class="page">
+        <div class="page-heading"><div><p class="eyebrow">SPENDING WITH INTENTION</p><h1>Budgets</h1></div></div>
+        <label class="field-label" for="budgetMonth">Budget month</label><input id="budgetMonth" type="month">
+        <form id="budgetForm" class="form-card">
+          <h2>Set a monthly limit</h2>
+          <label>Category<select id="budgetCategory"></select></label>
+          <label>Monthly limit (₹)<input id="budgetLimit" type="number" min="1" step="0.01" placeholder="e.g. 12000" required></label>
+          <button class="primary-btn" type="submit">Save budget</button>
+        </form>
+        <div class="section-heading"><h2>Budget performance</h2></div>
+        <div id="budgetList" class="budget-stack empty">No budgets set yet.</div>
+      </section>
+
+      <section id="reports" class="page">
+        <div class="page-heading"><div><p class="eyebrow">UNDERSTAND YOUR MONEY</p><h1>Reports</h1></div></div>
+        <label class="field-label" for="reportMonth">Report month</label><input id="reportMonth" type="month">
+        <div class="metric-grid report-metrics"><article class="metric"><small>Income</small><strong id="reportIncome">₹0</strong></article><article class="metric"><small>Expenses</small><strong id="reportExpense">₹0</strong></article></div>
+        <article class="cashflow"><span>Net cash flow</span><strong id="reportNet">₹0</strong></article>
+        <div class="section-heading"><h2>Spending by category</h2></div><div id="categoryReport" class="list-card empty">No spending data for this month.</div>
+        <div class="section-heading"><h2>Portfolio allocation</h2></div><div id="portfolioReport" class="list-card empty">Add assets to see allocation.</div>
+      </section>
+
+      <section id="settings" class="page">
+        <div class="page-heading"><div><p class="eyebrow">PREFERENCES & DATA</p><h1>Settings</h1></div></div>
+        <article class="settings-card">
+          <h2>Cloud sync</h2>
+          <p id="cloudStatus" class="status-line">Not configured · Local-only mode</p>
+          <p class="hint">Cloud sync uses your own Supabase project. Your public project URL and anon key are stored in this app; Row Level Security protects each account's records. Never put a service-role key here.</p>
+          <button class="secondary-btn" id="configureCloudBtn">Configure cloud sync</button>
+          <button class="secondary-btn" id="loginBtn">Sign in / create account</button>
+          <button class="secondary-btn" id="syncNowBtn">Sync now</button>
+        </article>
+        <article class="settings-card">
+          <h2>Backup & restore</h2>
+          <p class="hint">Export a CSV backup of transactions or a complete JSON backup of this device's data.</p>
+          <div class="button-row"><button class="secondary-btn" id="exportCsvBtn">Export transactions CSV</button><button class="secondary-btn" id="exportJsonBtn">Export full backup</button></div>
+          <label class="secondary-btn file-button">Restore JSON backup<input type="file" id="restoreJsonInput" accept="application/json"></label>
+          <label class="secondary-btn file-button">Import bank CSV<input type="file" id="importCsvInput" accept=".csv,text/csv"></label>
+          <p class="hint">CSV import expects date,description,amount,type,category. Review imported records carefully. PDF statements are not parsed.</p>
+        </article>
+        <article class="settings-card">
+          <h2>App installation</h2>
+          <p class="hint">On iPhone, open this app in Safari, tap Share, then Add to Home Screen. The app must be hosted over HTTPS.</p>
+          <button class="secondary-btn" id="installHelpBtn">Show iPhone install steps</button>
+        </article>
+        <article class="settings-card danger-zone"><h2>Local data</h2><button class="danger-btn" id="clearDataBtn">Delete local data</button></article>
+        <p class="version">MY WEALTH · PRIVATE FINANCE TRACKER · INR</p>
+      </section>
+    </main>
+
+    <nav class="tabbar" aria-label="Main navigation">
+      <button class="tab active" data-tab="dashboard"><span>⌂</span><small>Home</small></button>
+      <button class="tab" data-tab="transactions"><span>⇄</span><small>Activity</small></button>
+      <button class="tab" data-tab="wealth"><span>◈</span><small>Wealth</small></button>
+      <button class="tab" data-tab="budgets"><span>◎</span><small>Budgets</small></button>
+      <button class="tab" data-tab="reports"><span>▥</span><small>Reports</small></button>
+    </nav>
+  </div>
+
+  <dialog id="entryDialog">
+    <form id="transactionForm" class="dialog-form">
+      <div class="dialog-header"><div><p class="eyebrow">RECORD MONEY MOVEMENT</p><h2 id="entryTitle">Add transaction</h2></div><button type="button" class="close-btn" data-close="entryDialog">×</button></div>
+      <div class="segmented"><button type="button" class="selected" data-kind="Expense">Expense</button><button type="button" data-kind="Income">Income</button></div>
+      <label>Amount (₹)<input id="entryAmount" type="number" min="0.01" step="0.01" placeholder="0.00" required></label>
+      <label>Category<select id="entryCategory" required></select></label>
+      <label>Date<input id="entryDate" type="date" required></label>
+      <label>Description<input id="entryNote" maxlength="120" placeholder="Optional"></label>
+      <label class="check-label"><input id="entryRecurring" type="checkbox"> Recurring transaction</label>
+      <button class="primary-btn" type="submit">Save transaction</button>
+    </form>
+  </dialog>
+
+  <dialog id="assetDialog"><form id="assetForm" class="dialog-form">
+    <div class="dialog-header"><div><p class="eyebrow">WHAT YOU OWN</p><h2>Add asset</h2></div><button type="button" class="close-btn" data-close="assetDialog">×</button></div>
+    <label>Asset name<input id="assetName" required placeholder="e.g. Index fund"></label>
+    <label>Asset class<select id="assetClass"></select></label>
+    <label>Current value (₹)<input id="assetValue" type="number" min="0.01" step="0.01" required></label>
+    <button class="primary-btn">Save asset</button>
+  </form></dialog>
+
+  <dialog id="debtDialog"><form id="debtForm" class="dialog-form">
+    <div class="dialog-header"><div><p class="eyebrow">WHAT YOU OWE</p><h2>Add liability</h2></div><button type="button" class="close-btn" data-close="debtDialog">×</button></div>
+    <label>Loan / liability name<input id="debtName" required placeholder="e.g. Home loan"></label>
+    <label>Outstanding balance (₹)<input id="debtValue" type="number" min="0.01" step="0.01" required></label>
+    <button class="primary-btn">Save liability</button>
+  </form></dialog>
+
+  <dialog id="cloudDialog"><form id="cloudForm" class="dialog-form">
+    <div class="dialog-header"><div><p class="eyebrow">YOUR PRIVATE CLOUD</p><h2>Connect Supabase</h2></div><button type="button" class="close-btn" data-close="cloudDialog">×</button></div>
+    <p class="hint">Create a Supabase project, run the SQL in the supplied setup file, then enter your Project URL and anon/public key. Do not use a service_role key.</p>
+    <label>Project URL<input id="supabaseUrl" type="url" placeholder="https://xxxx.supabase.co" required></label>
+    <label>Anon / publishable key<input id="supabaseKey" type="password" autocomplete="off" required></label>
+    <button class="primary-btn">Save cloud configuration</button>
+  </form></dialog>
+
+  <dialog id="authDialog"><form id="authForm" class="dialog-form">
+    <div class="dialog-header"><div><p class="eyebrow">CLOUD ACCOUNT</p><h2>Sign in</h2></div><button type="button" class="close-btn" data-close="authDialog">×</button></div>
+    <label>Email<input id="authEmail" type="email" autocomplete="email" required></label>
+    <label>Password<input id="authPassword" type="password" minlength="8" autocomplete="current-password" required></label>
+    <div class="button-row"><button class="primary-btn" type="submit" data-auth="login">Sign in</button><button class="secondary-btn" type="button" id="signupBtn">Create account</button></div>
+    <button class="secondary-btn" type="button" id="logoutBtn">Sign out</button>
+  </form></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
