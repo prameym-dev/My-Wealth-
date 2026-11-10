@@ -89,3 +89,12 @@ This is a reference-led responsive implementation, not a guarantee of literal pi
 
 ### Regression tests
 Run `npm test` from the repository root. The 12 automated tests cover CDSL parser reconciliation, idempotent eCAS import, Bluecoins import normalization/deduplication, transfer candidate detection, transfer conversion/undo, account-balance preservation and static UI integrity. `tests/e2e-smoke.html` is an additional browser smoke test for top-bar scoping, navigation, settings, reports, budget and Add Transaction. The headless browser could not be launched in the build environment, so run this harness on the deployed iPhone PWA.
+
+## UI refinement release — 10 Nov 2026
+- Reports advanced filters now open in a modal dialog; date and select controls use a consistent compact 42px field height.
+- Removed the four separate Assets, Liabilities, Investments and Cash & Bank summary tiles from Home.
+- Added a dedicated Set Budget page with a top-bar back button, month selector, editable category limits and a single Save Budgets action.
+- Replaced the Settings gear artwork with a clean, symmetrical outline gear.
+- Dark-mode cards and report/budget surfaces now use darker neutral surfaces instead of bright white/pastel blocks.
+- Settings main page is simplified; Cloud backup & restore, Import data and Export data each open a dedicated subpage.
+- Hardened advanced-filter category population for both array-based custom categories and Bluecoins' imported object-shaped category metadata.

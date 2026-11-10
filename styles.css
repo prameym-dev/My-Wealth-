@@ -387,3 +387,53 @@ body.settings-page-mode .topbar .settings-top-btn{display:none}
 @media(max-width:390px){.settings-group{padding:12px 13px}.settings-group .setting-row,.settings-group .setting-link{min-height:41px;font-size:11px}.transfer-candidate-card .button-row{flex-direction:column}}
 
 #investmentTxToHoldingLabel[hidden],#investmentTxToUnitsLabel[hidden]{display:none!important}
+
+/* November polish: modal report filters, compact date fields, dark surfaces, dedicated budget editor and settings subpages */
+body.budget-page-mode .topbar .top-context-title{display:block}
+body.budget-page-mode .topbar #topSetBudgetBackBtn[hidden],body.budget-page-mode .topbar #topBudgetTitle[hidden],body.budget-page-mode .topbar #topSetBudgetTitle[hidden]{display:none!important}
+body.budget-page-mode #topSetBudgetBtn[hidden]{display:none!important}
+#budgets .budget-gauge-card{background:var(--white);border:1px solid var(--line);color:var(--ink)}
+#budgets .budget-category-line i{color:var(--muted)}
+.budget-editor-month{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px;margin:2px 0 10px;padding:11px 13px;background:var(--white);border:1px solid var(--line);border-radius:14px}
+.budget-editor-month label{font-size:12px;font-weight:750;color:var(--muted)}
+.budget-editor-month input{width:100%;height:38px;min-width:0;padding:6px 10px;font-size:13px}
+.budget-edit-list{display:flex;flex-direction:column;padding:0 12px;background:var(--white);border:1px solid var(--line);border-radius:15px;overflow:hidden}
+.budget-edit-row{display:grid;grid-template-columns:34px minmax(0,1fr) minmax(105px,38%);align-items:center;gap:9px;min-height:55px;padding:7px 1px;border-bottom:1px solid var(--line)}
+.budget-edit-row:last-child{border-bottom:0}
+.budget-edit-row>strong{font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.budget-edit-input-wrap{display:flex;align-items:center;gap:5px;min-width:0;height:36px;padding:0 8px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--muted)}
+.budget-edit-input-wrap input{width:100%;min-width:0;height:32px;padding:3px 0;border:0;background:transparent;text-align:right;color:var(--ink);font-size:12px!important}
+.budget-save-all{width:100%;margin:14px 0 8px;min-height:46px}
+#reportFilterDialog{width:min(440px,calc(100% - 28px));border-radius:20px}
+#reportFilterDialog .dialog-form{padding:19px}
+#reportFilterDialog .report-filter-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+#reportFilterDialog .report-filter-grid label{display:grid;gap:5px;min-width:0;font-size:11px;color:var(--muted);font-weight:700}
+#reportFilterDialog .report-filter-grid input,#reportFilterDialog .report-filter-grid select,
+#filterDialog .dialog-form>label input[type="date"],#filterDialog .dialog-form>label select{display:block;width:100%;min-width:0;height:42px;min-height:42px;max-height:42px;box-sizing:border-box;margin:0;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--white);color:var(--ink);font-size:13px!important;line-height:normal;-webkit-appearance:none;appearance:none}
+#filterDialog .dialog-form>label{display:grid;gap:6px}
+#filterDialog .dialog-form>label input[type="date"]{margin-top:0}
+#reportFilterDialog .report-filter-grid input[type="date"]{padding-right:8px}
+#reportFilterDialog .report-filter-actions{display:grid;grid-template-columns:1fr 1fr;margin-top:14px}
+#reportFilterDialog .report-filter-actions button{min-height:42px}
+.settings-subpage[hidden],#settingsMainView[hidden]{display:none!important}
+.settings-subpage .settings-group{display:grid;gap:9px}
+.settings-subpage .settings-group h2{margin-bottom:0}
+.settings-action-wide{width:100%;min-height:43px;display:flex;align-items:center;justify-content:center;margin:0;text-align:center}
+.settings-subpage .setting-link{min-height:43px}
+.settings-subpage .file-button{position:relative}
+.settings-subpage .file-button input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+html[data-theme="dark"]{--white:#202c26;--bg:#111a16;--line:#34443b;--ink:#e7efe9;--muted:#a6b5ac}
+html[data-theme="dark"] .home-month-card,html[data-theme="dark"] .budget-gauge-card,html[data-theme="dark"] #budgetList.budget-stack,
+html[data-theme="dark"] .budget-edit-list,html[data-theme="dark"] .budget-editor-month,html[data-theme="dark"] .settings-group,
+html[data-theme="dark"] .report-category-list,html[data-theme="dark"] .report-line-chart,html[data-theme="dark"] .report-filters,
+html[data-theme="dark"] .report-total-card,html[data-theme="dark"] .report-category-item{background:#202c26!important;color:var(--ink)!important;border-color:#34443b!important}
+html[data-theme="dark"] .report-total-card>span,html[data-theme="dark"] .report-total-card>small{color:#b5c5bb!important}
+html[data-theme="dark"] .report-donut-hole{background:#202c26!important}
+html[data-theme="dark"] .budget-edit-input-wrap{background:#17221c;border-color:#3b4b42}
+html[data-theme="dark"] .budget-category-icon,html[data-theme="dark"] .report-category-icon{background:#2b3b32!important;color:#a9dfbd!important}
+html[data-theme="dark"] .progress,html[data-theme="dark"] .report-category-progress{background:#39483f}
+html[data-theme="dark"] .budget-category-row{color:var(--ink)!important;border-color:#34443b!important}
+html[data-theme="dark"] .report-section-tabs{background:#202c26}
+html[data-theme="dark"] .report-section-tabs button.selected{background:var(--accent-dark);color:#fff}
+@media(prefers-color-scheme:dark){html[data-theme="system"]{--white:#202c26;--bg:#111a16;--line:#34443b;--ink:#e7efe9;--muted:#a6b5ac}html[data-theme="system"] .home-month-card,html[data-theme="system"] .budget-gauge-card,html[data-theme="system"] #budgetList.budget-stack,html[data-theme="system"] .budget-edit-list,html[data-theme="system"] .budget-editor-month,html[data-theme="system"] .settings-group,html[data-theme="system"] .report-category-list,html[data-theme="system"] .report-line-chart,html[data-theme="system"] .report-total-card,html[data-theme="system"] .report-category-item{background:#202c26!important;color:var(--ink)!important;border-color:#34443b!important}html[data-theme="system"] .report-total-card>span,html[data-theme="system"] .report-total-card>small{color:#b5c5bb!important}html[data-theme="system"] .report-donut-hole{background:#202c26!important}html[data-theme="system"] .budget-edit-input-wrap{background:#17221c;border-color:#3b4b42}}
+@media(max-width:390px){.budget-edit-row{grid-template-columns:31px minmax(0,1fr) minmax(98px,39%);gap:7px;min-height:52px}.budget-edit-row>strong{font-size:11px}#reportFilterDialog .dialog-form{padding:16px}#reportFilterDialog .report-filter-grid{gap:8px}}

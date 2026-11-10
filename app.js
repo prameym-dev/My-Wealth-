@@ -62,13 +62,37 @@ function empty(text){return `<div class="empty">${esc(text)}</div>`;}
 function sum(xs,fn){return xs.reduce((a,x)=>a+fn(x),0);}
 function inMonth(date,month){return String(date||"").slice(0,7)===month;}
 function options(el,values,selected){el.innerHTML=values.map(v=>`<option ${v===selected?"selected":""}>${esc(v)}</option>`).join("");}
-function nav(page){if(page!==currentPage){if(page==="settings")previousPage=currentPage;else if(currentPage!=="settings")previousPage=currentPage;}currentPage=page;document.body.classList.toggle("activity-page-mode",page==="transactions");document.body.classList.toggle("budget-page-mode",page==="budgets");document.body.classList.toggle("reports-page-mode",page==="reports");document.body.classList.toggle("settings-page-mode",page==="settings");if($("topActivityTitle"))$("topActivityTitle").hidden=page!=="transactions";if($("topBudgetTitle"))$("topBudgetTitle").hidden=page!=="budgets";if($("topReportTitle"))$("topReportTitle").hidden=page!=="reports";if($("topSettingsTitle"))$("topSettingsTitle").hidden=page!=="settings";if($("topSettingsBackBtn"))$("topSettingsBackBtn").hidden=page!=="settings";if($("topSearchBtn"))$("topSearchBtn").hidden=page!=="transactions";if($("topFilterBtn"))$("topFilterBtn").hidden=!(page==="transactions"||page==="reports");if($("topSetBudgetBtn"))$("topSetBudgetBtn").hidden=page!=="budgets";if($("topSettingsBtn"))$("topSettingsBtn").hidden=page==="settings";if(page!=="transactions"&&$("topSearchInput")){$("topSearchInput").hidden=true;if($("transactionSearch"))$("transactionSearch").value="";}if(page!=="reports"&&$("reportFiltersPanel"))$("reportFiltersPanel").hidden=true;if(page==="reports"&&$("reportCategoryDetailView")){$("reportCategoryDetailView").hidden=true;$("reportMainView").hidden=false;}document.querySelectorAll(".page").forEach(p=>{p.classList.toggle("active",p.id===page);p.scrollTop=0;});document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===page));document.querySelector("main")?.scrollTo(0,0);window.scrollTo(0,0);if(page==="settings")updateCloudStatus();render();}
+function nav(page){
+ if(page!==currentPage){if(page==="settings")previousPage=currentPage;else if(currentPage!=="settings"&&page!=="setBudget")previousPage=currentPage;}
+ currentPage=page;
+ const isActivity=page==="transactions",isBudget=page==="budgets",isSetBudget=page==="setBudget",isReports=page==="reports",isSettings=page==="settings";
+ document.body.classList.toggle("activity-page-mode",isActivity);document.body.classList.toggle("budget-page-mode",isBudget||isSetBudget);document.body.classList.toggle("reports-page-mode",isReports);document.body.classList.toggle("settings-page-mode",isSettings);
+ if($("topActivityTitle"))$("topActivityTitle").hidden=!isActivity;
+ if($("topBudgetTitle"))$("topBudgetTitle").hidden=!isBudget;
+ if($("topSetBudgetTitle"))$("topSetBudgetTitle").hidden=!isSetBudget;
+ if($("topReportTitle"))$("topReportTitle").hidden=!isReports;
+ if($("topSettingsTitle"))$("topSettingsTitle").hidden=!isSettings;
+ if($("topSettingsBackBtn"))$("topSettingsBackBtn").hidden=!isSettings;
+ if($("topSetBudgetBackBtn"))$("topSetBudgetBackBtn").hidden=!isSetBudget;
+ if($("topSearchBtn"))$("topSearchBtn").hidden=!isActivity;
+ if($("topFilterBtn"))$("topFilterBtn").hidden=!(isActivity||isReports);
+ if($("topSetBudgetBtn"))$("topSetBudgetBtn").hidden=!isBudget;
+ if($("topSettingsBtn"))$("topSettingsBtn").hidden=isSettings;
+ if(!isActivity&&$("topSearchInput")){$("topSearchInput").hidden=true;if($("transactionSearch"))$("transactionSearch").value="";}
+ if(!isReports&&$("reportFilterDialog")?.open)$("reportFilterDialog").close();
+ if(isReports&&$("reportCategoryDetailView")){$("reportCategoryDetailView").hidden=true;$("reportMainView").hidden=false;}
+ if(isSettings){showSettingsMain();updateCloudStatus();}
+ if(isSetBudget){if($("budgetEditMonth"))$("budgetEditMonth").value=$("budgetMonth").value||monthKey();renderBudgetEditor();}
+ document.querySelectorAll(".page").forEach(p=>{p.classList.toggle("active",p.id===page);p.scrollTop=0;});
+ document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===page||((isBudget||isSetBudget)&&b.dataset.tab==="budgets")));
+ document.querySelector("main")?.scrollTo(0,0);window.scrollTo(0,0);render();
+}
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.tab)));
 const topSettingsButton=$("topSettingsBtn");if(topSettingsButton)topSettingsButton.addEventListener("click",()=>nav("settings"));
-if($("topSettingsBackBtn"))$("topSettingsBackBtn").addEventListener("click",()=>nav(previousPage||"dashboard"));
-if($("topSetBudgetBtn"))$("topSetBudgetBtn").addEventListener("click",()=>{$("budgetForm").hidden=!$("budgetForm").hidden;if(!$("budgetForm").hidden)$("budgetCategory").focus();});
-if($("topFilterBtn"))$("topFilterBtn").addEventListener("click",()=>{if(document.body.classList.contains("reports-page-mode")){$("reportFiltersPanel").hidden=!$("reportFiltersPanel").hidden;}else $("advancedFilterBtn").click();});
-if($("closeReportFilters"))$("closeReportFilters").addEventListener("click",()=>{$("reportFiltersPanel").hidden=true;});
+if($("topSettingsBackBtn"))$("topSettingsBackBtn").addEventListener("click",()=>{const sub=document.querySelector(".settings-subpage:not([hidden])");if(sub){showSettingsMain();return;}nav(previousPage||"dashboard");});
+if($("topSetBudgetBackBtn"))$("topSetBudgetBackBtn").addEventListener("click",()=>nav("budgets"));
+if($("topSetBudgetBtn"))$("topSetBudgetBtn").addEventListener("click",()=>nav("setBudget"));
+if($("topFilterBtn"))$("topFilterBtn").addEventListener("click",()=>{if(document.body.classList.contains("reports-page-mode")){showDialog("reportFilterDialog");}else $("advancedFilterBtn").click();});
 if($("reportCategoryBack"))$("reportCategoryBack").addEventListener("click",()=>{$("reportCategoryDetailView").hidden=true;$("reportMainView").hidden=false;if($("topFilterBtn")&&document.body.classList.contains("reports-page-mode"))$("topFilterBtn").hidden=false;});
 if($("topSearchBtn"))$("topSearchBtn").addEventListener("click",()=>{const field=$("topSearchInput");field.hidden=!field.hidden;if(!field.hidden){field.value=$("transactionSearch").value||"";field.focus();}else{field.value="";$("transactionSearch").value="";render();}});
 if($("topSearchInput"))$("topSearchInput").addEventListener("input",()=>{$("transactionSearch").value=$("topSearchInput").value;render();});
@@ -88,23 +112,23 @@ if($("accentSelect"))$("accentSelect").addEventListener("change",e=>{localStorag
 $("cancelEntryBtn").onclick=()=>{$("entryDialog").close();editingTransactionId=null;};
 if($("activityMonthLabel"))$("activityMonthLabel").textContent=new Date().toLocaleDateString("en-IN",{month:"short",year:"numeric"});
 $("todayLabel").textContent=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
-$("dashMonth").value=monthKey();$("budgetMonth").value=monthKey();
-options($("entryCategory"),getCategories("Expense"),"Food");options($("budgetCategory"),getCategories("Expense"),"Food");options($("assetClass"),ASSET_CLASSES,"Mutual funds");
+$("dashMonth").value=monthKey();$("budgetMonth").value=monthKey();if($("budgetEditMonth"))$("budgetEditMonth").value=monthKey();
+options($("entryCategory"),getCategories("Expense"),"Food");options($("assetClass"),ASSET_CLASSES,"Mutual funds");
 $("entryDate").value=new Date().toISOString().slice(0,10);
 $("addTransactionBtn").onclick=()=>{ editingTransactionId=null;$("entryTitle").textContent="Add transaction";$("saveEntryBtn").textContent="Save transaction";$("transactionForm").reset(); currentKind="Expense";document.querySelectorAll("[data-kind]").forEach(x=>x.classList.toggle("selected",x.dataset.kind==="Expense"));options($("entryCategory"),getCategories("Expense"),"Food");setTransactionKind("Expense");$("entryDate").value=new Date().toISOString().slice(0,10);refreshAccountSelect();showDialog("entryDialog");};
 $("addAssetBtn").onclick=()=>showDialog("assetDialog");$("addDebtBtn").onclick=()=>showDialog("debtDialog");
 $("transactionForm").addEventListener("submit",async e=>{e.preventDefault();const amount=Number($("entryAmount").value);if(!amount||amount<=0)return;const accountId=$("entryAccount").value||null,account=state.accounts.find(a=>a.id===accountId);const date=$("entryDate").value,note=$("entryNote").value;let payload;if(currentKind==="Transfer"){const toId=$("entryToAccount").value||null,to=state.accounts.find(a=>a.id===toId);if(!accountId||!toId){toast("Choose both source and destination accounts");return;}if(accountId===toId){toast("Source and destination must be different accounts");return;}payload={date,amount,kind:"Transfer",category:"Self transfer",note,accountId,account:account?.name||"",counterAccountId:toId,counterAccount:to?.name||"",transferGroupId:id(),recurring:false};}else payload={date,amount,kind:currentKind,category:$("entryCategory").value,note,accountId,account:account?.name||"",recurring:$("entryRecurring").checked};if(editingTransactionId){const tx=state.transactions.find(t=>t.id===editingTransactionId);if(tx)Object.assign(tx,payload);}else state.transactions.unshift({id:id(),...payload});if(!(await persist()))return;$("entryDialog").close();e.target.reset();editingTransactionId=null;toast(currentKind==="Transfer"?"Self transfer saved":"Transaction saved");});
 $("assetForm").addEventListener("submit",async e=>{e.preventDefault();const value=Number($("assetValue").value);if(!value||value<=0)return;state.assets.push({id:id(),name:$("assetName").value.trim(),assetClass:$("assetClass").value,value,updatedAt:new Date().toISOString()});if(!(await persist()))return;$("assetDialog").close();e.target.reset();toast("Asset added");});
 $("debtForm").addEventListener("submit",async e=>{e.preventDefault();const value=Number($("debtValue").value);if(!value||value<=0)return;state.liabilities.push({id:id(),name:$("debtName").value.trim(),value,updatedAt:new Date().toISOString()});if(!(await persist()))return;$("debtDialog").close();e.target.reset();toast("Liability added");});
-if($("editBudgetsBtn"))$("editBudgetsBtn").onclick=()=>{$("budgetForm").hidden=!$("budgetForm").hidden;};
-$("budgetForm").addEventListener("submit",async e=>{e.preventDefault();const limit=Number($("budgetLimit").value),category=$("budgetCategory").value;if(!limit||limit<=0)return;state.budgets=state.budgets.filter(b=>b.category!==category);state.budgets.push({id:id(),category,limit});if(!(await persist()))return;$("budgetLimit").value="";toast("Budget saved");});
+
 $("dashMonth").addEventListener("change",render);$("budgetMonth").addEventListener("change",render);$("transactionSearch").addEventListener("input",render);
 $("advancedFilterBtn").onclick=()=>{refreshAdvancedFilters();$("filterAccount").value=activityFilters.account||accountActivityFilter||"";$("filterType").value=activityFilters.type;$("filterCategory").value=activityFilters.category;$("filterSort").value=activityFilters.sort;$("filterFrom").value=activityFilters.from;$("filterTo").value=activityFilters.to;showDialog("filterDialog");};
 $("filterForm").onsubmit=e=>{e.preventDefault();activityFilters={account:$("filterAccount").value,type:$("filterType").value,category:$("filterCategory").value,sort:$("filterSort").value,from:$("filterFrom").value,to:$("filterTo").value};accountActivityFilter=null;$("filterDialog").close();render();};
 $("resetActivityFilters").onclick=()=>{activityFilters={account:"",type:"All",category:"",sort:"newest",from:"",to:""};accountActivityFilter=null;$("filterForm").reset();};
 if($("clearAccountFilterBtn"))$("clearAccountFilterBtn").onclick=()=>{accountActivityFilter=null;activityFilters.account="";render();};
-function refreshAdvancedFilters(){const accOpts='<option value="">All accounts</option>'+state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join("");$("filterAccount").innerHTML=accOpts;$("reportAccount").innerHTML=accOpts;const cats=[...new Set([...EXPENSES,...INCOMES,...(state.categories||[]).map(c=>c.name||c)])];const catOpts='<option value="">All categories</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join("");$("filterCategory").innerHTML=catOpts;$("reportCategory").innerHTML=catOpts;}
+function refreshAdvancedFilters(){const accOpts='<option value="">All accounts</option>'+(Array.isArray(state.accounts)?state.accounts:[]).map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join("");$("filterAccount").innerHTML=accOpts;$("reportAccount").innerHTML=accOpts;const cats=[...new Set([...getCategories("Expense"),...getCategories("Income")])];const catOpts='<option value="">All categories</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join("");$("filterCategory").innerHTML=catOpts;$("reportCategory").innerHTML=catOpts;}
 refreshAdvancedFilters();$("reportFrom").value=monthKey()+"-01";$("reportTo").value=new Date().toISOString().slice(0,10);["reportFrom","reportTo","reportAccount","reportCategory"].forEach(k=>$(k).addEventListener("change",renderReports));$("resetReportFilters").onclick=()=>{$("reportFrom").value="";$("reportTo").value="";$("reportAccount").value="";$("reportCategory").value="";renderReports();};
+if($("reportFilterForm"))$("reportFilterForm").onsubmit=e=>{e.preventDefault();$("reportFilterDialog").close();renderReports();};
 function accountMatches(ref,a){return String(ref??"")===String(a.id)||String(ref??"")===String(a.sourceId??"__none__");}
 function accountBalance(a){let bal=Number(a.openingBalance)||0;for(const t of state.transactions){if(t.isReminder||t.isTransferReconciled)continue;const amt=Math.abs(Number(t.amount)||0);if(t.kind==="Transfer"){if(accountMatches(t.accountId,a))bal-=amt;if(accountMatches(t.counterAccountId,a))bal+=amt;}else if(accountMatches(t.accountId,a)){if(t.kind==="Income")bal+=amt;else if(t.kind==="Expense")bal-=amt;}}return bal;}
 function refreshAccountSelect(){const active=(state.accounts||[]).filter(a=>!a.closed);for(const idn of ["entryAccount","entryToAccount"]){const el=$(idn);if(!el)continue;const old=el.value;el.innerHTML=(idn==="entryAccount"?'<option value="">No account</option>':'<option value="">Choose destination</option>')+active.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join("");if(active.some(a=>a.id===old))el.value=old;}}
@@ -113,7 +137,7 @@ function render(){
  const investmentAssets=sum(state.investments||[],h=>Number(h.value)||0),assets=sum(state.assets,x=>x.value)+sum((state.accounts||[]).filter(a=>!a.closed),a=>accountBalance(a))+investmentAssets,debts=sum(state.liabilities,x=>x.value),month=$("dashMonth").value||monthKey(),mTx=state.transactions.filter(x=>!x.isTransferReconciled&&inMonth(x.date,month)),inc=sum(mTx.filter(x=>x.kind==="Income"),x=>x.amount),exp=sum(mTx.filter(x=>x.kind==="Expense"),x=>x.amount);
  $("netWorth").textContent=money(assets-debts);$("assetTotal").textContent=money(assets);$("debtTotal").textContent=money(debts);$("monthIncome").textContent=money(inc);$("monthExpense").textContent=money(exp);$("monthSavings").textContent=money(inc-exp);$("monthSavings").style.color=inc>=exp?"#208357":"#a44c43";$("wealthNet").textContent=money(assets-debts);
  renderInvestments();
- $("homeAssets").textContent=money(assets);$("homeLiabilities").textContent=money(debts);$("homeInvestments").textContent=money(investmentAssets);$("homeCashBank").textContent=money(sum((state.accounts||[]).filter(a=>!a.closed),accountBalance));
+
  $("recentList").className="list-card"+(state.transactions.length?"":" empty");$("recentList").innerHTML=state.transactions.length?state.transactions.filter(t=>!t.isReminder&&!t.isTransferReconciled).slice(0,3).map(txRow).join(""):empty("No activity yet. Add your first transaction.");
  const q=($("transactionSearch").value||"").toLowerCase(),f=activityFilters;
  let filtered=state.transactions.filter(t=>!t.isReminder&&!t.isTransferReconciled&&(f.type==="All"||t.kind===f.type)&&(!f.account&&!accountActivityFilter||String(t.accountId)===String(f.account||accountActivityFilter))&&(!f.category||t.category===f.category)&&(!f.from||String(t.date)>=f.from)&&(!f.to||String(t.date)<=f.to)&&(`${t.category} ${t.note} ${t.account||""}`.toLowerCase().includes(q)));
@@ -190,13 +214,27 @@ function renderTransferReconciliation(){
  document.querySelectorAll("[data-undo-transfer]").forEach(b=>b.onclick=async()=>{if(!confirm("Undo this reconciliation and restore the original income and expense entries?"))return;const before=cloneState();MyWealthCore.undoTransferReconciliation(state,b.dataset.undoTransfer);if(!(await persistWithRollback(before)))return;renderTransferReconciliation();toast("Original transactions restored");});
 }
 $("reviewTransfersBtn").onclick=()=>{renderTransferReconciliation();showDialog("transferReconciliationDialog");};
-["backupRestoreBtn","importDataBtn","exportDataBtn"].forEach(idn=>{const b=$(idn);if(b)b.onclick=()=>{const panel=document.querySelector(".settings-hidden-tools");panel.classList.add("open");panel.scrollIntoView({behavior:"smooth",block:"start"});if(idn==="importDataBtn")$("bluecoinsInput").focus();};});
+function showSettingsMain(){if($("settingsMainView"))$("settingsMainView").hidden=false;document.querySelectorAll(".settings-subpage").forEach(x=>x.hidden=true);if($("topSettingsTitle"))$("topSettingsTitle").textContent="Settings";}
+function showSettingsSubpage(id,title){$("settingsMainView").hidden=true;document.querySelectorAll(".settings-subpage").forEach(x=>x.hidden=x.id!==id);if($("topSettingsTitle"))$("topSettingsTitle").textContent=title;$("settings").scrollTo(0,0);document.querySelector("main")?.scrollTo(0,0);}
+$("backupRestoreBtn").onclick=()=>showSettingsSubpage("cloudSettingsPage","Cloud backup & restore");
+$("importDataBtn").onclick=()=>showSettingsSubpage("importSettingsPage","Import data");
+$("exportDataBtn").onclick=()=>showSettingsSubpage("exportSettingsPage","Export data");
+if($("importEcasFromSettings"))$("importEcasFromSettings").onclick=()=>showDialog("investmentImportDialog");
 
 function categoryIconSvg(t){const c=String(t.category||"").toLowerCase();let p='<path d="M4 12h16M12 4v16"/>';if(/food|dining|restaurant|swiggy|zomato/.test(c))p='<path d="M6 3v8m-3-8v5a3 3 0 0 0 6 0V3M6 11v10m10-18v18m0-18c3 3 3 7 0 10"/>';else if(/grocery|supermarket/.test(c))p='<path d="M3 4h2l2 12h11l3-8H6M9 20h.01M17 20h.01"/>';else if(/fuel|petrol|diesel/.test(c))p='<path d="M5 21V4a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17M4 21h13M8 6h5v5H8zM16 8h2l2 3v6a2 2 0 0 1-4 0v-4"/>';else if(/wifi|internet|subscription/.test(c))p='<path d="M2 8a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0m-11 4a5 5 0 0 1 8 0m-4 4h.01"/>';else if(t.kind==="Transfer")p='<path d="M3 8h17m-4-4 4 4-4 4M21 16H4m4-4-4 4 4 4"/>';else if(t.kind==="Income")p='<path d="M12 19V5m-6 6 6-6 6 6"/>';else p='<path d="M12 5v14m-6-6 6 6 6-6"/>';return `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;}
 function txRow(t,actions=false){const color=t.kind==="Income"?"positive":t.kind==="Expense"?"negative":"";return `<div class="list-row transaction-row" data-open-tx="${esc(t.id)}">${actions?`<label class="tx-select"><input type="checkbox" data-select-tx="${esc(t.id)}" ${selectedTransactionIds.has(String(t.id))?"checked":""} aria-label="Select transaction"></label>`:""}<div class="row-icon ${t.kind==="Income"?"income-icon":t.kind==="Expense"?"expense-icon":"transfer-icon"}">${categoryIconSvg(t)}</div><div class="row-main"><strong>${esc(t.category)}</strong><small>${esc(t.note||t.kind)}${t.account?" · "+esc(t.account):""}${t.recurring?" · Recurring":""}</small></div><div class="row-amount ${color}">${t.kind==="Income"?"+":t.kind==="Expense"?"−":""}${money(t.amount)}</div></div>`;}
 
 function bindDeletes(){document.querySelectorAll("[data-delete]").forEach(b=>b.onclick=async()=>{const key={transaction:"transactions",asset:"assets",debt:"liabilities"}[b.dataset.delete];if(!confirm("Delete this record?"))return;state[key]=state[key].filter(x=>x.id!==b.dataset.id);await persist();});}
 function budgetCategoryIcon(category){const c=String(category||"").toLowerCase();let path='<circle cx="12" cy="12" r="7"/><path d="M12 8v8m-4-4h8"/>';if(/food|dining|restaurant/.test(c))path='<path d="M6 3v8m-3-8v5a3 3 0 0 0 6 0V3M6 11v10m10-18v18m0-18c3 3 3 7 0 10"/>';else if(/grocer|supermarket/.test(c))path='<path d="M3 4h2l2 12h11l3-8H6M9 20h.01M17 20h.01"/>';else if(/transport|travel|fuel/.test(c))path='<path d="M5 18V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v12M3 18h18M8 8h8v5H8zM8 21h.01M16 21h.01"/>';else if(/utilit|electric|water|bill/.test(c))path='<path d="M13 2 5 13h6l-1 9 9-12h-6z"/>';else if(/subscription|internet/.test(c))path='<path d="M2 8a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0m-11 4a5 5 0 0 1 8 0m-4 4h.01"/>';else if(/housing|home|rent/.test(c))path='<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>';return `<svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg>`;}
+
+function renderBudgetEditor(){
+ const categories=[...new Set([...getCategories("Expense"),...(state.budgets||[]).map(b=>b.category)])].filter(Boolean).sort((a,b)=>a.localeCompare(b));
+ const current=new Map((state.budgets||[]).map(b=>[b.category,Number(b.limit)||0]));
+ const host=$("budgetEditList");if(!host)return;
+ host.innerHTML=categories.map(category=>`<label class="budget-edit-row"><span class="budget-category-icon">${budgetCategoryIcon(category)}</span><strong>${esc(category)}</strong><span class="budget-edit-input-wrap"><span>₹</span><input type="number" min="0" step="0.01" inputmode="decimal" data-budget-edit="${esc(category)}" value="${current.get(category)||""}" placeholder="0"></span></label>`).join("");
+}
+$("saveAllBudgetsBtn").onclick=async()=>{const before=cloneState(),existing=new Map((state.budgets||[]).map(b=>[b.category,b]));const next=[];document.querySelectorAll("[data-budget-edit]").forEach(input=>{const limit=Number(input.value);if(Number.isFinite(limit)&&limit>0){const prior=existing.get(input.dataset.budgetEdit);next.push({id:prior?.id||id(),category:input.dataset.budgetEdit,limit});}});state.budgets=next;if(!(await persistWithRollback(before)))return;toast("Budgets saved");nav("budgets");};
+if($("budgetEditMonth"))$("budgetEditMonth").addEventListener("change",()=>{$("budgetMonth").value=$("budgetEditMonth").value;render();});
 function renderBudgets(){const month=$("budgetMonth").value||monthKey();const monthExpenses=state.transactions.filter(t=>t.kind==="Expense"&&inMonth(t.date,month));const spentTotal=sum(monthExpenses,t=>t.amount);const budgetTotal=sum(state.budgets,b=>Number(b.limit)||0);const pctTotal=budgetTotal?Math.min(100,spentTotal/budgetTotal*100):0;$("budgetGaugeSpent").textContent=money(spentTotal);$("budgetGaugeLimit").textContent=`of ${money(budgetTotal)}`;$("budgetGaugePercent").textContent=`${Math.round(pctTotal)}% spent`;
 $("budgetGaugeRemaining").textContent=`${money(budgetTotal-spentTotal)} remaining`;$("budgetGaugeFill").style.strokeDasharray=`${Math.PI*96}`;$("budgetGaugeFill").style.strokeDashoffset=`${Math.PI*96*(1-pctTotal/100)}`;
 $("budgetList").className="budget-stack"+ (state.budgets.length?"":" empty");
@@ -293,7 +331,7 @@ function openReportCategory(category,kind="Expense"){
   const byDate={};rows.forEach(t=>(byDate[t.date||"Undated"] ||= []).push(t));
   list.innerHTML=Object.entries(byDate).sort((a,b)=>b[0].localeCompare(a[0])).map(([date,items])=>`<div class="report-date-heading">${esc(date)}</div>${items.map(t=>txRow(t,false)).join("")}`).join("");
  }
- $("reportMainView").hidden=true;$("reportCategoryDetailView").hidden=false;$("reportFiltersPanel").hidden=true;if($("topFilterBtn"))$("topFilterBtn").hidden=true;
+ $("reportMainView").hidden=true;$("reportCategoryDetailView").hidden=false;if($("topFilterBtn"))$("topFilterBtn").hidden=true;
  $("reports").scrollTo(0,0);document.querySelector("main")?.scrollTo(0,0);
 }
 
@@ -369,7 +407,7 @@ $("logoutBtn").onclick=()=>{session=null;localStorage.removeItem("mywealth-token
 $("syncNowBtn").onclick=()=>syncCloud();
 async function syncCloud(){if(!supabase){toast("Configure cloud sync first");showDialog("cloudDialog");return;}if(!session?.access_token){toast("Sign in to your cloud account first");showDialog("authDialog");return;}try{const rows=await sbFetch("/rest/v1/user_finance?select=data&id=eq."+encodeURIComponent(session.user.id));if(rows?.[0]?.data){state=mergeState(state,rows[0].data);}const payload={id:session.user.id,data:state,updated_at:new Date().toISOString()};await sbFetch("/rest/v1/user_finance?on_conflict=id",{method:"POST",body:payload});await persist();toast("Cloud sync complete");}catch(err){toast("Sync failed: "+err.message);}}
 function mergeState(local,cloud){const merged=emptyState();for(const k of Object.keys(merged)){const map=new Map();[...(cloud[k]||[]),...(local[k]||[])].forEach(x=>map.set(x.id,x));merged[k]=[...map.values()];}return merged;}
-$("installHelpBtn").onclick=()=>alert("On your iPhone: open this site in Safari → tap Share → Add to Home Screen → Add. Use Safari, not an in-app browser.");
+
 $("clearDataBtn").onclick=async()=>{if(confirm("Permanently delete all local finance records on this device? This does not delete cloud records.")){state=emptyState();if(await persist())toast("Local data deleted");}};
 initSupabase();
 
