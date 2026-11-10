@@ -5,12 +5,13 @@ const path=require('node:path');
 const root=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
+const css=fs.readFileSync(path.join(root,'styles.css'),'utf8');
 const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 
 test('HTML IDs are unique and critical workflow controls exist',()=>{
   const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]);
   assert.equal(new Set(ids).size,ids.length,'duplicate HTML id found');
-  for(const id of ['topSettingsTitle','topSettingsBackBtn','reviewTransfersBtn','transferReconciliationDialog','investmentHoldingForm','investmentTransactionForm','investmentTxToHolding','investmentTxToUnits','ecasFile','ecasPassword','confirmEcasImport','reportMainView'])assert.ok(ids.includes(id),`missing ${id}`);
+  for(const id of ['topSettingsTitle','topSettingsBackBtn','topSetBudgetTitle','topSetBudgetBackBtn','setBudget','budgetEditList','saveAllBudgetsBtn','reportFilterDialog','reportFilterForm','reviewTransfersBtn','transferReconciliationDialog','investmentHoldingForm','investmentTransactionForm','investmentTxToHolding','investmentTxToUnits','ecasFile','ecasPassword','confirmEcasImport','reportMainView','cloudSettingsPage','importSettingsPage','exportSettingsPage'])assert.ok(ids.includes(id),`missing ${id}`);
 });
 
 test('core module loads before app and is cached by the service worker',()=>{
@@ -18,14 +19,42 @@ test('core module loads before app and is cached by the service worker',()=>{
   assert.match(sw,/\.\/finance-core\.js/);
 });
 
-test('navigation scopes Activity search, Reports filter, Budget action and Settings back affordance',()=>{
-  assert.match(app,/topSearchBtn.*hidden=page!=="transactions"/);
-  assert.match(app,/topFilterBtn.*hidden=![^;]*page==="transactions"\|\|page==="reports"/);
-  assert.match(app,/topSetBudgetBtn.*hidden=page!=="budgets"/);
-  assert.match(app,/topSettingsBackBtn.*hidden=page!=="settings"/);
+test('navigation scopes Activity, Reports, Budget editor and Settings correctly',()=>{
+  assert.match(app,/isActivity=page==="transactions"/);
+  assert.match(app,/hidden=!isActivity/);
+  assert.match(app,/hidden=\!\(isActivity\|\|isReports\)/);
+  assert.match(app,/hidden=!isBudget/);
+  assert.match(app,/hidden=!isSetBudget/);
+  assert.match(app,/hidden=!isSettings/);
+  assert.match(app,/showDialog\("reportFilterDialog"\)/);
 });
 
-test('reconciled historical source entries are excluded from balances and summaries',()=>{
+test('Home no longer renders the four separate asset summary blocks',()=>{
+  const home=html.slice(html.indexOf('<section id="dashboard"'),html.indexOf('<section id="transactions"'));
+  assert.doesNotMatch(home,/home-summary-grid|homeAssets|homeLiabilities|homeInvestments|homeCashBank/);
+});
+
+test('Set Budget is a dedicated page with a back route and bulk category editor',()=>{
+  assert.match(html,/<section id="setBudget" class="page">/);
+  assert.match(html,/id="topSetBudgetBackBtn"/);
+  assert.match(app,/addEventListener\("click",\(\)=>nav\("budgets"\)\)/);
+  assert.match(app,/function renderBudgetEditor\(\)/);
+  assert.match(app,/saveAllBudgetsBtn/);
+});
+
+test('Settings separates cloud, import and export into dedicated subpages',()=>{
+  for(const id of ['cloudSettingsPage','importSettingsPage','exportSettingsPage'])assert.match(html,new RegExp(`id="${id}"`));
+  assert.match(app,/showSettingsSubpage\("cloudSettingsPage","Cloud backup & restore"\)/);
+  assert.match(app,/showSettingsSubpage\("importSettingsPage","Import data"\)/);
+  assert.match(app,/showSettingsSubpage\("exportSettingsPage","Export data"\)/);
+  assert.doesNotMatch(html,/settings-hidden-tools/);
+});
+
+test('Date filter fields have a shared compact sizing rule',()=>{
+  assert.match(css,/#reportFilterDialog[\s\S]*#filterDialog[\s\S]*height:42px/);
+});
+
+test('Reconciled historical source entries are excluded from balances and summaries',()=>{
   assert.match(app,/t\.isReminder\|\|t\.isTransferReconciled/);
   assert.match(app,/!t\.isTransferReconciled/);
 });
