@@ -14,7 +14,7 @@
   <div class="app-shell">
     <header class="topbar">
       <div class="brand"><div class="brand-mark">MW</div><div><strong>MY WEALTH</strong><small>Personal finance</small></div></div>
-      <h1 id="topActivityTitle" class="top-context-title" hidden>Activity</h1><h1 id="topBudgetTitle" class="top-context-title" hidden>Budgets</h1>
+      <button id="topSettingsBackBtn" class="top-back-btn" type="button" aria-label="Back" hidden>‹</button><h1 id="topActivityTitle" class="top-context-title" hidden>Activity</h1><h1 id="topBudgetTitle" class="top-context-title" hidden>Budgets</h1><h1 id="topReportTitle" class="top-context-title" hidden>Reports</h1><h1 id="topSettingsTitle" class="top-context-title" hidden>Settings</h1>
       <div class="top-actions"><input id="topSearchInput" class="top-search-input" type="search" placeholder="Search activity" aria-label="Search transactions" hidden><button id="topSearchBtn" class="icon-btn activity-header-action" aria-label="Search transactions" hidden><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button><button id="topFilterBtn" class="icon-btn activity-header-action" aria-label="Advanced filters" hidden><svg viewBox="0 0 24 24"><path d="M4 5h16l-6.2 7.2v5.1l-3.6 1.8v-6.9L4 5Z"/></svg></button><button id="topSetBudgetBtn" class="top-budget-action" type="button" hidden>＋ Set budget</button><button id="topSettingsBtn" class="icon-btn settings-top-btn" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z"/><path d="m19.4 13.5 1.1.9-1.2 2.1-1.4-.5a7.8 7.8 0 0 1-1.6.9l-.2 1.5h-2.4l-.3-1.5a7.8 7.8 0 0 1-1.7-.7l-1.3.7-1.4-1.9 1.1-1.1a7.5 7.5 0 0 1-.3-1.8l-1.3-.8.9-2.2 1.5.2a7.6 7.6 0 0 1 1.4-1.1l.1-1.5h2.4l.4 1.5a7.6 7.6 0 0 1 1.7.7l1.3-.7 1.4 1.9-1.1 1.1c.2.6.3 1.2.2 1.8Z"/></svg></button></div>
     </header>
 
@@ -46,7 +46,7 @@
 
       <section id="transactions" class="page">
         <button id="advancedFilterBtn" type="button" hidden aria-hidden="true"></button>
-        <div class="activity-month-row"><button type="button" id="activityPrevMonth" aria-label="Previous month">‹</button><strong id="activityMonthLabel">Current activity</strong><button type="button" id="activityNextMonth" aria-label="Next month">›</button><button class="activity-add-btn" id="addTransactionBtn" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add transaction</span></button></div><div class="activity-type-pills"><button class="selected" data-activity-type="All">All</button><button data-activity-type="Income">Income</button><button data-activity-type="Expense">Expense</button><button data-activity-type="Transfer">Transfer</button></div><input id="transactionSearch" type="search" hidden aria-hidden="true"><div id="activeFilterSummary" class="hint"></div>
+        <div class="activity-month-row"><button type="button" id="activityPrevMonth" aria-label="Previous month">‹</button><strong id="activityMonthLabel">Current activity</strong><button type="button" id="activityNextMonth" aria-label="Next month">›</button><button class="activity-add-btn" id="addTransactionBtn" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add transaction</span></button></div><div class="activity-type-pills"><button class="selected" data-activity-type="All">All</button><button data-activity-type="Income">Income</button><button data-activity-type="Expense">Expense</button><button data-activity-type="Transfer">Transfer</button></div><input id="transactionSearch" type="search" hidden aria-hidden="true"><div id="activeFilterSummary" class="hint"></div><button type="button" id="clearAccountFilterBtn" class="text-btn" hidden>Clear account filter</button>
         <div id="transactionList" class="list-card empty">No transactions recorded.</div>
       </section>
 
@@ -61,7 +61,7 @@
           <button class="investment-tile" data-investment-category="ETFs"><span>▥</span><strong>ETFs</strong><b id="etfValue">₹0</b><small id="etfCount">0 holdings</small></button>
           <button class="investment-tile" data-investment-category="Others"><span>◇</span><strong>Others</strong><b id="otherValue">₹0</b><small id="otherCount">0 holdings</small></button>
         </div>
-        <div class="button-row investment-actions"><button class="secondary-btn" id="investmentTransactionsBtn" type="button">Investment transactions</button><button class="secondary-btn" id="addInvestmentSnapshotBtn" type="button">Add statement snapshot</button></div>
+        <div class="button-row investment-actions"><button class="secondary-btn" id="investmentTransactionsBtn" type="button">Investment transactions</button><button class="secondary-btn" id="addInvestmentSnapshotBtn" type="button">Add statement snapshot</button></div><div class="button-row investment-actions"><button class="secondary-btn" id="addInvestmentHoldingBtn" type="button">＋ Add holding</button><button class="secondary-btn" id="addInvestmentTransactionBtn" type="button">＋ Add investment transaction</button></div>
         <div class="section-heading"><h2>Accounts & wallets</h2><button class="primary-btn small" id="addAccountBtn">＋ Add account</button></div><div id="accountList" class="list-card empty">No accounts added yet.</div>
         <div class="section-heading"><h2>Assets</h2><button class="primary-btn small" id="addAssetBtn">＋ Add asset</button></div>
         <div id="assetList" class="list-card empty">No assets added yet.</div>
@@ -83,47 +83,74 @@
       </section>
 
       <section id="reports" class="page">
-        <div class="page-heading"><div><p class="eyebrow">UNDERSTAND YOUR MONEY</p><h1>Reports</h1></div></div>
-        <div class="report-filters"><label>From<input id="reportFrom" type="date"></label><label>To<input id="reportTo" type="date"></label><label>Account<select id="reportAccount"><option value="">All accounts</option></select></label><label>Type<select id="reportType"><option value="All">All activity</option><option>Income</option><option>Expense</option><option>Transfer</option></select></label><label>Category<select id="reportCategory"><option value="">All categories</option></select></label><button class="secondary-btn" id="resetReportFilters" type="button">Reset filters</button></div>
-        <div class="metric-grid report-metrics"><article class="metric"><small>Income</small><strong id="reportIncome">₹0</strong></article><article class="metric"><small>Expenses</small><strong id="reportExpense">₹0</strong></article></div>
-        <article class="cashflow"><span>Net cash flow</span><strong id="reportNet">₹0</strong></article>
-        <div class="section-heading"><h2>Income summary by category</h2></div><div id="reportIncomeSummary" class="list-card empty">No income data for this period.</div><div class="section-heading"><h2>Income vs expenses</h2></div><div id="reportTrend" class="chart-card"></div><div class="section-heading"><h2>Spending by category</h2></div><div id="categoryReport" class="list-card empty">No spending data for this period.</div><div class="section-heading"><h2>Account activity</h2></div><div id="accountReport" class="list-card empty"></div>
-        <div class="section-heading"><h2>Net worth</h2></div><div id="netWorthReport" class="list-card empty"></div><div class="section-heading"><h2>Portfolio allocation</h2></div><div id="portfolioReport" class="list-card empty">Add assets to see allocation.</div>
+        <div id="reportMainView">
+          <div class="report-section-tabs" role="tablist" aria-label="Report type">
+            <button type="button" class="selected" data-report-view="spending">Spending</button>
+            <button type="button" data-report-view="income">Income</button>
+            <button type="button" data-report-view="networth">Net Worth</button>
+          </div>
+          <div id="reportFiltersPanel" class="report-filters" hidden>
+            <div class="report-filter-heading"><strong>Advanced filters</strong><button type="button" class="text-btn" id="closeReportFilters">Done</button></div>
+            <div class="report-filter-grid">
+              <label>From<input id="reportFrom" type="date"></label><label>To<input id="reportTo" type="date"></label>
+              <label>Account<select id="reportAccount"><option value="">All accounts</option></select></label>
+              <label>Category<select id="reportCategory"><option value="">All categories</option></select></label>
+            </div>
+            <button class="secondary-btn" id="resetReportFilters" type="button">Reset filters</button>
+          </div>
+          <div id="reportSpendingView" class="report-view">
+            <article class="report-total-card"><span>Total Spent</span><strong id="reportExpense">₹0</strong><small id="reportSpendingPeriod">Selected period</small></article>
+            <div class="report-chart-section"><div id="spendingDonut" class="report-donut"><div class="report-donut-hole"><strong id="spendingDonutTotal">₹0</strong><small>Total spend</small></div></div><div id="spendingLegend" class="report-legend"></div></div>
+            <div class="section-heading"><h2>Categories</h2></div><div id="categoryReport" class="report-category-list empty">No spending data for this period.</div>
+          </div>
+          <div id="reportIncomeView" class="report-view" hidden>
+            <article class="report-total-card income-report-total"><span>Total Income</span><strong id="reportIncome">₹0</strong><small id="reportIncomePeriod">Selected period</small></article>
+            <div class="report-chart-section"><div id="incomeDonut" class="report-donut income-donut"><div class="report-donut-hole"><strong id="incomeDonutTotal">₹0</strong><small>Total income</small></div></div><div id="incomeLegend" class="report-legend"></div></div>
+            <div class="section-heading"><h2>Categories</h2></div><div id="reportIncomeSummary" class="report-category-list empty">No income data for this period.</div>
+          </div>
+          <div id="reportNetWorthView" class="report-view" hidden>
+            <article class="report-total-card networth-report-total"><span>Net Worth</span><strong id="reportNetWorthValue">₹0</strong><small id="reportNetWorthChange">Current recorded value</small></article>
+            <div class="section-heading"><h2>Net Worth Trend</h2></div><div id="netWorthTrendChart" class="report-line-chart"></div>
+            <div class="section-heading"><h2>Breakdown</h2></div><div id="netWorthBreakdown" class="report-category-list"></div>
+          </div>
+        </div>
+        <div id="reportCategoryDetailView" class="report-category-detail" hidden>
+          <div class="report-detail-heading"><button type="button" id="reportCategoryBack" class="report-back-btn" aria-label="Back to reports">‹</button><div><h2 id="reportCategoryTitle">Category</h2><small id="reportCategorySubtitle">Transactions</small></div></div>
+          <article class="report-total-card"><span>Total Spent</span><strong id="reportCategoryTotal">₹0</strong><small id="reportCategoryCount">0 transactions</small><small id="reportCategoryBudgetMeta" class="report-category-budget-meta"></small></article>
+          <div id="reportCategoryTransactions" class="report-transaction-list"></div>
+        </div>
       </section>
 
       <section id="settings" class="page">
-        <div class="page-heading"><div><p class="eyebrow">PREFERENCES & DATA</p><h1>Settings</h1></div></div>
-        <article class="settings-card">
-          <h2>Appearance</h2><label class="setting-row"><span>Display mode</span><select id="themeSelect"><option value="system">Follow device</option><option value="light">Light</option><option value="dark">Dark</option></select></label><label class="setting-row"><span>Accent colour</span><select id="accentSelect"><option value="green">Green</option><option value="blue">Blue</option><option value="teal">Teal</option><option value="purple">Purple</option><option value="orange">Orange</option></select></label><p class="hint">Display mode and accent colour are independent preferences.</p>
-        </article>
-        <article class="settings-card"><h2>App</h2><button class="setting-link" id="settingsAccountsBtn" type="button"><span>▣　Accounts</span><b>›</b></button><button class="setting-link" id="settingsAboutBtn" type="button"><span>ⓘ　About</span><b>›</b></button></article>
-        <article class="settings-card"><h2>Categories</h2><p class="hint">Create, rename or remove your own income and expense categories.</p><button class="secondary-btn" id="manageCategoriesBtn">Manage categories</button><div id="categoryManagerList"></div></article>
-        <article class="settings-card">
-          <h2>Cloud sync</h2>
-          <p id="cloudStatus" class="status-line">Not configured · Local-only mode</p>
-          <p class="hint">Cloud sync uses your own Supabase project. Your public project URL and anon key are stored in this app; Row Level Security protects each account's records. Never put a service-role key here.</p>
-          <button class="secondary-btn" id="configureCloudBtn">Configure cloud sync</button>
-          <button class="secondary-btn" id="loginBtn">Sign in / create account</button>
-          <button class="secondary-btn" id="syncNowBtn">Sync now</button>
-        </article>
-        <article class="settings-card">
-          <h2>Bluecoins migration</h2><p class="hint">Import the prepared MyWealth_Bluecoins_Import.json file. All 5,233 source records are retained, including reminders and special flags. Review the preview before confirming.</p><label class="secondary-btn file-button">Choose Bluecoins JSON<input type="file" id="bluecoinsInput" accept=".json,application/json"></label><div id="bluecoinsPreview" class="hint">No Bluecoins file selected.</div><button class="primary-btn" id="confirmBluecoinsBtn" disabled>Import Bluecoins history</button><p class="hint">Amounts are normalized automatically during import. Older imports with the previous scale issue are corrected once when this app version loads.</p>
-        </article>
-        <article class="settings-card">
-          <h2>Backup & restore</h2>
-          <p class="hint">Export a CSV backup of transactions or a complete JSON backup of this device's data.</p>
-          <div class="button-row"><button class="secondary-btn" id="exportCsvBtn">Export transactions CSV</button><button class="secondary-btn" id="exportJsonBtn">Export full backup</button></div>
-          <label class="secondary-btn file-button">Restore JSON backup<input type="file" id="restoreJsonInput" accept="application/json"></label>
-          <label class="secondary-btn file-button">Import bank CSV<input type="file" id="importCsvInput" accept=".csv,text/csv"></label>
-          <p class="hint">CSV import expects date,description,amount,type,category. Review imported records carefully. PDF statements are not parsed.</p>
-        </article>
-        <article class="settings-card">
-          <h2>App installation</h2>
-          <p class="hint">On iPhone, open this app in Safari, tap Share, then Add to Home Screen. The app must be hosted over HTTPS.</p>
-          <button class="secondary-btn" id="installHelpBtn">Show iPhone install steps</button>
-        </article>
-        <article class="settings-card danger-zone"><h2>Local data</h2><button class="danger-btn" id="clearDataBtn">Delete local data</button></article>
-        <p class="version">MY WEALTH · PRIVATE FINANCE TRACKER · INR</p>
+        <div class="settings-reference-layout">
+          <section class="settings-group"><h2>Appearance</h2>
+            <label class="setting-row"><span><i class="setting-icon">▣</i>Display Mode</span><select id="themeSelect"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+            <label class="setting-row"><span><i class="setting-icon">◉</i>Accent Colour</span><select id="accentSelect"><option value="green">Green</option><option value="blue">Blue</option><option value="teal">Teal</option><option value="purple">Purple</option><option value="orange">Orange</option></select></label>
+          </section>
+          <section class="settings-group"><h2>Data</h2>
+            <button class="setting-link" id="backupRestoreBtn" type="button"><span><i class="setting-icon">☁</i>Backup &amp; Restore</span><b>›</b></button>
+            <button class="setting-link" id="importDataBtn" type="button"><span><i class="setting-icon">⇩</i>Import (Bluecoins / eCAS)</span><b>›</b></button>
+            <button class="setting-link" id="exportDataBtn" type="button"><span><i class="setting-icon">⇧</i>Export Data</span><b>›</b></button>
+            <button class="setting-link" id="reviewTransfersBtn" type="button"><span><i class="setting-icon">⇄</i>Historical transfer reconciliation <small id="transferCandidateBadge">Review</small></span><b>›</b></button>
+            <div id="cloudStatus" class="status-line">Not configured · Local-only mode</div>
+            <div class="button-row"><button class="secondary-btn" id="configureCloudBtn" type="button">Configure cloud sync</button><button class="secondary-btn" id="loginBtn" type="button">Sign in / create account</button><button class="secondary-btn" id="syncNowBtn" type="button">Sync now</button></div>
+          </section>
+          <section class="settings-group"><h2>App</h2>
+            <button class="setting-link" id="manageCategoriesBtn" type="button"><span><i class="setting-icon">◎</i>Categories</span><b>›</b></button>
+            <button class="setting-link" id="settingsAccountsBtn" type="button"><span><i class="setting-icon">▤</i>Accounts</span><b>›</b></button>
+            <button class="setting-link" id="settingsAboutBtn" type="button"><span><i class="setting-icon">ⓘ</i>About</span><b>›</b></button>
+          </section>
+          <section class="settings-group settings-hidden-tools" aria-label="Data tools">
+            <h2>Import and backup tools</h2>
+            <p class="hint">Bluecoins import, eCAS investment import and backup options.</p>
+            <label class="secondary-btn file-button">Choose Bluecoins JSON<input type="file" id="bluecoinsInput" accept=".json,application/json"></label><div id="bluecoinsPreview" class="hint">No Bluecoins file selected.</div><button class="primary-btn" id="confirmBluecoinsBtn" disabled>Import Bluecoins history</button>
+            <div class="button-row"><button class="secondary-btn" id="exportCsvBtn" type="button">Export transactions CSV</button><button class="secondary-btn" id="exportJsonBtn" type="button">Export full backup</button></div>
+            <label class="secondary-btn file-button">Restore JSON backup<input type="file" id="restoreJsonInput" accept="application/json"></label>
+            <label class="secondary-btn file-button">Import bank CSV<input type="file" id="importCsvInput" accept=".csv,text/csv"></label>
+            <button class="secondary-btn" id="installHelpBtn" type="button">Show iPhone install steps</button>
+            <button class="danger-btn" id="clearDataBtn" type="button">Delete local data</button>
+          </section>
+        </div>
       </section>
     </main>
 
@@ -141,8 +168,11 @@
 
   <dialog id="transactionDetailDialog"><div class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">TRANSACTION</p><h2 id="detailTitle">Activity details</h2></div><button type="button" class="close-btn" data-close="transactionDetailDialog">×</button></div><div id="transactionDetailBody"></div><div class="button-row"><button type="button" class="secondary-btn" id="detailEditBtn">Edit</button><button type="button" class="secondary-btn" id="detailCopyBtn">Copy</button><button type="button" class="danger-btn" id="detailDeleteBtn">Delete</button></div></div></dialog>
   <dialog id="investmentDetailDialog"><div class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">PORTFOLIO</p><h2 id="investmentDetailTitle">Investments</h2></div><button type="button" class="close-btn" data-close="investmentDetailDialog">×</button></div><div id="investmentDetailSummary"></div><div id="investmentHoldingList"></div></div></dialog>
-  <dialog id="investmentImportDialog"><form id="investmentImportForm" class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">PORTFOLIO IMPORT</p><h2>Import eCAS statement</h2></div><button type="button" class="close-btn" data-close="investmentImportDialog">×</button></div><p class="hint">Select a CDSL eCAS PDF. The importer previews holdings and checks totals before saving.</p><label>eCAS PDF<input type="file" id="ecasFile" accept="application/pdf,.pdf" required></label><div id="ecasPreview" class="hint">No statement selected.</div><button class="primary-btn" id="confirmEcasImport" type="submit" disabled>Confirm import</button></form></dialog>
+  <dialog id="investmentImportDialog"><form id="investmentImportForm" class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">PORTFOLIO IMPORT</p><h2>Import eCAS statement</h2></div><button type="button" class="close-btn" data-close="investmentImportDialog">×</button></div><p class="hint">Select a CDSL eCAS PDF. The parser previews every holding and blocks import unless the statement totals reconcile.</p><label>eCAS PDF<input type="file" id="ecasFile" accept="application/pdf,.pdf" required></label><label>PDF password (if protected)<input type="password" id="ecasPassword" autocomplete="current-password" placeholder="Optional; used only to open this PDF"></label><div id="ecasPreview" class="hint">No statement selected.</div><button class="primary-btn" id="confirmEcasImport" type="submit" disabled>Confirm import</button></form></dialog>
   <dialog id="investmentTransactionsDialog"><div class="dialog-form"><div class="dialog-header"><h2>Investment transactions</h2><button type="button" class="close-btn" data-close="investmentTransactionsDialog">×</button></div><div id="investmentTransactionsList"></div></div></dialog>
+  <dialog id="transferReconciliationDialog"><div class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">HISTORICAL CLEANUP</p><h2>Review possible self transfers</h2></div><button type="button" class="close-btn" data-close="transferReconciliationDialog">×</button></div><p class="hint">Potential matches are suggestions only. Nothing changes until you confirm a pair. Original entries are retained and can be restored.</p><div id="transferCandidateList"></div><h3>Previously reconciled</h3><div id="reconciledTransferList"></div></div></dialog>
+  <dialog id="investmentHoldingDialog"><form id="investmentHoldingForm" class="dialog-form"><div class="dialog-header"><h2 id="investmentHoldingTitle">Add investment holding</h2><button type="button" class="close-btn" data-close="investmentHoldingDialog">×</button></div><label>Category<select id="holdingCategory"><option>Mutual Funds</option><option>Stocks</option><option>ETFs</option><option>Others</option></select></label><label>Name<input id="holdingName" required></label><label>ISIN (optional)<input id="holdingIsin"></label><label>Folio / account (optional)<input id="holdingAccount"></label><label>Units<input id="holdingUnits" type="number" min="0" step="0.000001" value="0"></label><label>Invested cost (₹)<input id="holdingCost" type="number" min="0" step="0.01" value="0"></label><label>Current value (₹)<input id="holdingValue" type="number" min="0" step="0.01" required></label><div class="button-row"><button class="secondary-btn" type="button" id="deleteHoldingBtn" hidden>Delete</button><button class="primary-btn" type="submit">Save holding</button></div></form></dialog>
+  <dialog id="investmentTransactionDialog"><form id="investmentTransactionForm" class="dialog-form"><div class="dialog-header"><h2 id="investmentTransactionTitle">Add investment transaction</h2><button type="button" class="close-btn" data-close="investmentTransactionDialog">×</button></div><label>Investment<select id="investmentTxHolding" required></select></label><label>Type<select id="investmentTxType"><option>Purchase</option><option>SIP</option><option>Redemption</option><option>Switch</option><option>Dividend</option><option>Fee</option><option>Bonus</option></select></label><label id="investmentTxToHoldingLabel" hidden>Switch to investment<select id="investmentTxToHolding"></select></label><label id="investmentTxToUnitsLabel" hidden>Units received<input id="investmentTxToUnits" type="number" min="0" step="0.000001"></label><label>Date<input id="investmentTxDate" type="date" required></label><label>Amount (₹)<input id="investmentTxAmount" type="number" min="0.01" step="0.01" required></label><label>Units (optional)<input id="investmentTxUnits" type="number" min="0" step="0.000001"></label><label>NAV / Price (optional)<input id="investmentTxPrice" type="number" min="0" step="0.000001"></label><label>Notes<input id="investmentTxNote" maxlength="160"></label><div class="button-row"><button class="secondary-btn" type="button" id="deleteInvestmentTxBtn" hidden>Delete</button><button class="primary-btn" type="submit">Save transaction</button></div></form></dialog>
   <dialog id="budgetTransactionsDialog"><div class="dialog-form"><div class="dialog-header"><h2 id="budgetTransactionsTitle">Category transactions</h2><button type="button" class="close-btn" data-close="budgetTransactionsDialog">×</button></div><div id="budgetTransactionsList"></div></div></dialog>
   <dialog id="filterDialog"><form id="filterForm" class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">FIND TRANSACTIONS</p><h2>Advanced filters</h2></div><button type="button" class="close-btn" data-close="filterDialog">×</button></div><label>Account<select id="filterAccount"><option value="">All accounts</option></select></label><label>Type<select id="filterType"><option value="All">All types</option><option>Income</option><option>Expense</option><option>Transfer</option></select></label><label>Category<select id="filterCategory"><option value="">All categories</option></select></label><label>Sort by<select id="filterSort"><option value="newest">Latest first</option><option value="oldest">Oldest first</option><option value="highest">Highest amount</option><option value="lowest">Lowest amount</option></select></label><label>From date<input id="filterFrom" type="date"></label><label>To date<input id="filterTo" type="date"></label><div class="button-row"><button class="secondary-btn" type="button" id="resetActivityFilters">Reset</button><button class="primary-btn" type="submit">Apply filters</button></div></form></dialog>
   <dialog id="categoryDialog"><form id="categoryForm" class="dialog-form"><div class="dialog-header"><div><p class="eyebrow">PERSONALISE</p><h2>Manage categories</h2></div><button type="button" class="close-btn" data-close="categoryDialog">×</button></div><label>Category type<select id="categoryKind"><option>Expense</option><option>Income</option></select></label><label>Category name<input id="categoryName" maxlength="40" required placeholder="e.g. Pet care"></label><button class="primary-btn" type="submit">Add category</button><div id="categoryListEditor"></div></form></dialog>
@@ -195,6 +225,7 @@
     <button class="secondary-btn" type="button" id="logoutBtn">Sign out</button>
   </form></dialog>
   <div id="toast" role="status" aria-live="polite"></div>
+  <script src="finance-core.js"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
