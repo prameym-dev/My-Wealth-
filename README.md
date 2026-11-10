@@ -34,3 +34,11 @@ This is a reference-led responsive implementation, not a guarantee of literal pi
 - Selection checkboxes precede category icons.
 - The bottom selection tray offers Add, Edit, Copy and Delete.
 - Transaction types have icons and the date field has a trailing calendar glyph.
+
+
+## Activity toolbar repair
+- Removed Set Budget from Activity and replaced it with Add Transaction in the month-navigation row.
+- Search expands inline in the top navigation; the standalone search row is removed.
+- Moved the bulk selection toolbar outside the scrolling page and anchored it above bottom navigation.
+- Updated shared navigation, transaction, search, filter, bulk-action and calendar glyphs to inline outline SVGs.
+- Reduced the transaction date field height to match other form controls.
