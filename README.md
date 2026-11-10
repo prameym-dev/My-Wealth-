@@ -42,3 +42,11 @@ This is a reference-led responsive implementation, not a guarantee of literal pi
 - Moved the bulk selection toolbar outside the scrolling page and anchored it above bottom navigation.
 - Updated shared navigation, transaction, search, filter, bulk-action and calendar glyphs to inline outline SVGs.
 - Reduced the transaction date field height to match other form controls.
+
+
+## Budget header and category redesign (10 Nov 2026)
+- Budget screen now uses a contextual top navigation title and a Set budget action beside Settings.
+- Removed the redundant in-page Budget heading and Set budget button.
+- Budget categories render as icon-led rows with spent/limit values, a progress bar and percentage used.
+- Replaced the settings glyph with a cleaner outline gear.
+- Forced the Add Transaction date control to the same 42px height as the other form fields.

@@ -227,3 +227,48 @@ body.activity-page-mode #bulkToolbar.has-selection{display:flex!important}body:n
 .tab span svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tab.active span{display:grid;place-items:center}
 @media(max-width:390px){body.activity-page-mode .topbar{height:70px;min-height:70px}.top-search-input{width:clamp(84px,27vw,125px)}.activity-month-row .activity-add-btn{font-size:10px;padding:6px 7px}#bulkToolbar{left:9px!important;right:9px!important;bottom:calc(78px + env(safe-area-inset-bottom) + 8px)!important}.bulk-actions button{min-height:45px}}
 .transaction-types .kind-icon{display:grid;place-items:center}.transaction-types .kind-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.bulk-actions button svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+
+/* Budget page header and category progress layout */
+body.budget-page-mode .topbar{height:76px;min-height:76px;padding:0 16px;justify-content:space-between}
+body.budget-page-mode .topbar .brand{display:none}
+body.budget-page-mode .topbar .top-budget-title{display:block}
+body.budget-page-mode .topbar .top-context-title{display:block;font-size:23px;white-space:nowrap}
+body.budget-page-mode .topbar .top-context-title[hidden]{display:none}
+body.budget-page-mode .topbar .top-actions{gap:9px}
+.top-budget-action{height:36px;padding:0 12px;border:1px solid #ffffff38;border-radius:10px;background:#ffffff16;color:#fff;font-size:11px;font-weight:800;white-space:nowrap}
+.top-budget-action[hidden]{display:none}
+.topbar .settings-top-btn{display:grid;place-items:center;border:0;border-radius:50%;background:transparent;width:38px;height:38px;color:#fff}
+.topbar .settings-top-btn svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.budget-page-mode .page-heading{display:none}
+#budgets .budget-controls{display:grid;grid-template-columns:auto minmax(130px,1fr);align-items:center;gap:10px;padding:0;margin:0 0 11px;border:0;background:transparent;box-shadow:none}
+#budgets .budget-controls .field-label{grid-column:auto;grid-row:auto;margin:0;font-size:11px;font-weight:750;color:var(--muted)}
+#budgets .budget-controls input{grid-column:auto;grid-row:auto;width:100%;height:34px;max-width:190px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:11px}
+#budgets .budget-gauge-card{margin:0 0 13px;padding:10px 13px 11px}
+#budgets .gauge-wrap{height:132px;max-width:270px}
+#budgets .gauge-wrap svg{height:132px}
+#budgets .section-heading{margin:13px 0 7px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+#budgets .section-heading h2{font-size:13px}
+#budgets .section-heading .muted-label{font-size:10px;font-weight:700;color:var(--ink)}
+#budgetList.budget-stack{display:grid;grid-template-columns:1fr;gap:0;padding:0 10px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+#budgetList .budget-category-row{width:100%;min-width:0;display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:8px;padding:10px 2px;border:0;border-bottom:1px solid #edf1ee;border-radius:0;background:transparent;text-align:left;color:var(--ink);box-shadow:none}
+#budgetList .budget-category-row:last-child{border-bottom:0}
+.budget-category-icon{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:#edf5ef;color:var(--green)}
+.budget-category-icon svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.budget-category-row:nth-child(4n+2) .budget-category-icon{background:#edf6f0;color:#268451}
+.budget-category-row:nth-child(4n+3) .budget-category-icon{background:#edf4fa;color:#367ba5}
+.budget-category-row:nth-child(4n+4) .budget-category-icon{background:#fff4e7;color:#c88737}
+.budget-category-main{display:grid;gap:6px;min-width:0}
+.budget-category-line{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.budget-category-line strong{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.budget-category-line>span{font-size:10px;font-weight:750;white-space:nowrap}
+.budget-category-line i{font-style:normal;color:var(--muted);font-weight:500}
+.budget-progress-line{display:grid;grid-template-columns:minmax(0,1fr) 29px;align-items:center;gap:8px}
+.budget-progress-line .progress{height:6px;margin:0;background:#e8eee9;border-radius:10px}
+.budget-progress-line .progress span{height:100%;border-radius:10px;background:#169b5b}
+.budget-progress-line .progress span.over{background:var(--danger)}
+.budget-progress-line>b{text-align:right;font-size:10px;font-weight:800;color:var(--ink)}
+#entryDialog .date-field-wrap{height:42px!important;min-height:42px!important;max-height:42px!important;width:100%;margin-top:6px}
+#entryDialog #entryDate{display:block;width:100%;height:42px!important;min-height:42px!important;max-height:42px!important;line-height:normal;padding:8px 39px 8px 11px!important;font-size:13px;-webkit-appearance:none;appearance:none;border-radius:11px}
+#entryDialog .date-field-icon{right:11px;top:50%;transform:translateY(-50%)}
+@media(max-width:390px){body.budget-page-mode .topbar{height:70px;min-height:70px;padding:0 13px}.top-budget-action{height:33px;padding:0 9px;font-size:10px}.budget-category-line>span{font-size:9px}#budgets .budget-gauge-card{padding:8px 10px}}
