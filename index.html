@@ -62,7 +62,7 @@
           <button class="primary-btn" type="submit">Save budget</button>
         </form>
         <div class="section-heading"><h2>Budget performance</h2></div>
-        <div id="budgetList" class="budget-stack empty">No budgets set yet.</div><div class="section-heading"><h2>Income summary</h2></div><div id="budgetIncomeSummary" class="list-card"></div>
+        <div id="budgetList" class="budget-stack empty">No budgets set yet.</div>
       </section>
 
       <section id="reports" class="page">
@@ -70,7 +70,7 @@
         <div class="report-filters"><label>From<input id="reportFrom" type="date"></label><label>To<input id="reportTo" type="date"></label><label>Account<select id="reportAccount"><option value="">All accounts</option></select></label><label>Type<select id="reportType"><option value="All">All activity</option><option>Income</option><option>Expense</option><option>Transfer</option></select></label><label>Category<select id="reportCategory"><option value="">All categories</option></select></label><button class="secondary-btn" id="resetReportFilters" type="button">Reset filters</button></div>
         <div class="metric-grid report-metrics"><article class="metric"><small>Income</small><strong id="reportIncome">₹0</strong></article><article class="metric"><small>Expenses</small><strong id="reportExpense">₹0</strong></article></div>
         <article class="cashflow"><span>Net cash flow</span><strong id="reportNet">₹0</strong></article>
-        <div class="section-heading"><h2>Income vs expenses</h2></div><div id="reportTrend" class="chart-card"></div><div class="section-heading"><h2>Spending by category</h2></div><div id="categoryReport" class="list-card empty">No spending data for this period.</div><div class="section-heading"><h2>Account activity</h2></div><div id="accountReport" class="list-card empty"></div>
+        <div class="section-heading"><h2>Income summary by category</h2></div><div id="reportIncomeSummary" class="list-card empty">No income data for this period.</div><div class="section-heading"><h2>Income vs expenses</h2></div><div id="reportTrend" class="chart-card"></div><div class="section-heading"><h2>Spending by category</h2></div><div id="categoryReport" class="list-card empty">No spending data for this period.</div><div class="section-heading"><h2>Account activity</h2></div><div id="accountReport" class="list-card empty"></div>
         <div class="section-heading"><h2>Portfolio allocation</h2></div><div id="portfolioReport" class="list-card empty">Add assets to see allocation.</div>
       </section>
 

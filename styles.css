@@ -66,3 +66,11 @@ input:focus,select:focus{outline-color:var(--accent)}
 .tabbar{border-top-color:var(--accent-border)}
 html[data-theme="dark"] .cashflow,html[data-theme="dark"] .summary-strip,html[data-theme="dark"] .secondary-btn,html[data-theme="dark"] .segmented button.selected{background:color-mix(in srgb,var(--accent) 24%,#18231e)!important;color:var(--ink)!important;border-color:var(--line)!important}
 html[data-theme="dark"] .tab.active span{background:color-mix(in srgb,var(--accent) 28%,#18231e)!important}
+
+/* Bottom navigation follows the selected app-wide accent palette. */
+.tabbar{background:var(--accent-dark)!important;border-top:1px solid var(--accent)!important}
+.tabbar .tab{color:color-mix(in srgb,var(--accent-soft) 68%,#ffffff)!important}
+.tabbar .tab.active{color:#ffffff!important}
+.tabbar .tab.active span{background:var(--accent)!important;color:#ffffff!important}
+.tabbar .tab small{color:inherit!important}
+html[data-theme="dark"] .tabbar,html[data-theme="navy"] .tabbar{background:var(--accent-dark)!important}
