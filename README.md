@@ -1,40 +1,28 @@
-# My Wealth — UI & Activity Update
+# My Wealth — Reference UI Redesign
 
-This update is based on the supplied `My-Wealth--main.zip` source and retains the existing IndexedDB database name (`mywealth-db`), object store (`finance`) and `app-state` record. It does not clear or reset existing local data.
+This build applies the supplied multi-screen reference design across the My Wealth iPhone PWA.
 
-## Included in this build
-- Refined visual system with consistent green selected-tab pill, matching outline settings icon, cleaner card spacing and responsive form controls.
-- Display Mode and Accent Colour shown as separate settings rows.
-- Activity long-press selection, selected count, Select All, Deselect All and bulk delete.
-- Add Transaction now supports Income, Expense and Self Transfer. Transfers require distinct source and destination accounts and are recorded as a single transfer record with both account references; account balances debit the source and credit the destination without affecting income/expense totals.
-- Reports spending-category rows open the underlying expense transactions for the selected date range and account filter.
-- Budget month and Set Budget controls share a compact aligned control row.
-- Wealth investment area presents only Mutual Funds, Stocks, ETFs and Others, with category detail views and statement snapshot support.
+## Included
+- Consistent forest-green header and bottom navigation, rounded active-tab treatment, pale mint canvas and matching cards/buttons.
+- Home dashboard summary cards, monthly cash-flow summary and compact recent activity.
+- Activity date-grouped transactions, month navigation, type filters, advanced filters and long-press multi-select with Select All / Deselect All and bulk Add / Edit / Categorise / Delete actions.
+- Add Transaction with Income, Expense and Self Transfer.
+- Wealth overview with Mutual Funds, Stocks, ETFs and Others, category detail with valuation/cost/gain-return summary and holding list.
+- Budget progress gauge, category spend bars and category transaction drill-down.
+- Reports for income, expenses, category spending, account activity and current net-worth breakdown, with category drill-down.
+- Settings with separate Display Mode and Accent Colour, category management, Accounts shortcut, backup/restore and imports.
 
-## Important limitations
-- The eCAS PDF import control is intentionally gated and does not commit any holdings in this build. A robust CDSL PDF parser must extract and reconcile each demat account and mutual-fund section against the statement totals before it is safe to import. This build does not claim that the eCAS parser is complete.
-- Investment category screens will remain empty until holdings are imported or entered through a future verified import/manual-entry workflow.
-- Historical transactions are not automatically reclassified as self-transfers. Review likely transfer pairs and back up your data before any historical cleanup.
+## Data safety
+- Preserves the existing IndexedDB database `mywealth-db`, object store `finance`, and `app-state` record. No database reset or destructive migration was added.
+- Existing transaction, account, budget, asset and investment records are not intentionally rewritten by this UI update.
+- Export a full JSON backup from Settings before deploying any update.
+- Do not clear Safari website data or remove the Home Screen app.
 
-## Deploy safely
-1. Export a full JSON backup from My Wealth Settings before replacing files.
-2. Extract this ZIP and upload its contents to the root of the existing GitHub Pages repository, replacing matching files.
-3. Commit and wait for GitHub Pages to deploy.
-4. Reopen the Home Screen app. The service-worker cache version has been incremented.
+## Deploy
+1. Download and extract this ZIP.
+2. Upload the contents of `My-Wealth--main` to the root of the existing GitHub Pages repository, replacing matching files.
+3. Commit the changes and wait for GitHub Pages to finish deploying.
+4. Close the Home Screen app fully and reopen it. The service-worker cache version has been updated to load the new UI.
 
-Do not clear Safari website data or delete the Home Screen app. The existing IndexedDB database is preserved by this source update.
-
-
-## UI refresh (November 2026)
-- Refined iPhone layout to match the approved My Wealth concept: deep-green header and bottom navigation, compact cards, consistent spacing and rounded controls.
-- Reworked settings row spacing and budget month / Set Budget alignment to prevent narrow-screen overlap.
-- Preserved existing app state keys, IndexedDB database name, and transaction data model.
-- Existing investment import remains safely disabled until CDSL demat extraction can be validated against statement totals.
-
-
-## Full UI rebuild (v14)
-This package updates the presentation layer to follow the approved My Wealth iPhone reference: forest-green navigation, compact home summary cards, activity filter pills, category tiles, consistent form controls, budget controls, and separated appearance settings. Existing IndexedDB storage (`my-wealth-db`, store `finance`, key `app-state`) and the existing finance data model are retained.
-
-Before deployment, export a full JSON backup from Settings. Deploy all files in this folder to the root of the existing GitHub Pages repository. Do not clear Safari website data or remove the Home Screen app.
-
-The eCAS demat parser remains a separate pending correction; this UI package does not claim to complete stock/ETF PDF extraction.
+## Scope and limitations
+This is a reference-led responsive implementation, not a guarantee of literal pixel identity across every iPhone/browser size. Device screenshot QA is still required. The eCAS PDF parser remains safely gated until its MF + demat extraction can be reconciled against statement totals. Live market prices are not enabled in this UI build.
