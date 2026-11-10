@@ -30,3 +30,11 @@ Do not clear Safari website data or delete the Home Screen app. The existing Ind
 - Reworked settings row spacing and budget month / Set Budget alignment to prevent narrow-screen overlap.
 - Preserved existing app state keys, IndexedDB database name, and transaction data model.
 - Existing investment import remains safely disabled until CDSL demat extraction can be validated against statement totals.
+
+
+## Full UI rebuild (v14)
+This package updates the presentation layer to follow the approved My Wealth iPhone reference: forest-green navigation, compact home summary cards, activity filter pills, category tiles, consistent form controls, budget controls, and separated appearance settings. Existing IndexedDB storage (`my-wealth-db`, store `finance`, key `app-state`) and the existing finance data model are retained.
+
+Before deployment, export a full JSON backup from Settings. Deploy all files in this folder to the root of the existing GitHub Pages repository. Do not clear Safari website data or remove the Home Screen app.
+
+The eCAS demat parser remains a separate pending correction; this UI package does not claim to complete stock/ETF PDF extraction.

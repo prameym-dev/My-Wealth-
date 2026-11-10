@@ -61,6 +61,9 @@ function nav(page){document.querySelectorAll(".page").forEach(p=>{p.classList.to
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.tab)));
 const topSettingsButton=$("topSettingsBtn");if(topSettingsButton)topSettingsButton.addEventListener("click",()=>nav("settings"));
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.go)));
+if($("activityBudgetShortcut"))$("activityBudgetShortcut").addEventListener("click",()=>nav("budgets"));
+document.querySelectorAll("[data-activity-type]").forEach(b=>b.addEventListener("click",()=>{activityFilters.type=b.dataset.activityType;document.querySelectorAll("[data-activity-type]").forEach(x=>x.classList.toggle("selected",x===b));render();}));
+
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>$(b.dataset.close).close()));
 function setTransactionKind(kind){currentKind=kind;document.querySelectorAll("[data-kind]").forEach(x=>x.classList.toggle("selected",x.dataset.kind===kind));const transfer=kind==="Transfer";$("entryCategoryWrap").hidden=transfer;$("entryAccountWrap").querySelector("span").textContent=transfer?"From account":"Account";$("entryToAccountWrap").hidden=!transfer;$("entryCategory").required=!transfer;options($("entryCategory"),getCategories(kind),kind==="Income"?"Salary":"Food");refreshAccountSelect();}
 document.querySelectorAll("[data-kind]").forEach(b=>b.addEventListener("click",()=>setTransactionKind(b.dataset.kind)));
@@ -71,6 +74,7 @@ applyTheme();
 if($("themeSelect")){ $("themeSelect").addEventListener("change",e=>{localStorage.setItem("mywealth-theme",e.target.value);applyTheme(e.target.value);}); }
 if($("accentSelect"))$("accentSelect").addEventListener("change",e=>{localStorage.setItem("mywealth-accent",e.target.value);applyTheme();});
 $("cancelEntryBtn").onclick=()=>{$("entryDialog").close();editingTransactionId=null;};
+if($("activityMonthLabel"))$("activityMonthLabel").textContent=new Date().toLocaleDateString("en-IN",{month:"short",year:"numeric"});
 $("todayLabel").textContent=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
 $("dashMonth").value=monthKey();$("budgetMonth").value=monthKey();
 options($("entryCategory"),getCategories("Expense"),"Food");options($("budgetCategory"),getCategories("Expense"),"Food");options($("assetClass"),ASSET_CLASSES,"Mutual funds");
@@ -97,8 +101,7 @@ function render(){
  const assets=sum(state.assets,x=>x.value)+sum((state.accounts||[]).filter(a=>!a.closed),a=>accountBalance(a)),debts=sum(state.liabilities,x=>x.value),month=$("dashMonth").value||monthKey(),mTx=state.transactions.filter(x=>inMonth(x.date,month)),inc=sum(mTx.filter(x=>x.kind==="Income"),x=>x.amount),exp=sum(mTx.filter(x=>x.kind==="Expense"),x=>x.amount);
  $("netWorth").textContent=money(assets-debts);$("assetTotal").textContent=money(assets);$("debtTotal").textContent=money(debts);$("monthIncome").textContent=money(inc);$("monthExpense").textContent=money(exp);$("monthSavings").textContent=money(inc-exp);$("monthSavings").style.color=inc>=exp?"#208357":"#a44c43";$("wealthNet").textContent=money(assets-debts);
  renderInvestments();
- const cash=sum((state.accounts||[]).filter(a=>!a.closed),a=>accountBalance(a));
- $("homeAssets").textContent=money(sum(state.assets||[],a=>Number(a.value)||0));$("homeLiabilities").textContent=money(debts);$("homeInvestments").textContent=money(sum(state.investments||[],h=>Number(h.value)||0));$("homeCash").textContent=money(cash);
+ $("homeAssets").textContent=money(assets);$("homeLiabilities").textContent=money(debts);$("homeInvestments").textContent=money(sum(state.investments||[],h=>Number(h.value)||0));$("homeCashBank").textContent=money(sum((state.accounts||[]).filter(a=>!a.closed),accountBalance));
  $("recentList").className="list-card"+(state.transactions.length?"":" empty");$("recentList").innerHTML=state.transactions.length?state.transactions.filter(t=>!t.isReminder).slice(0,3).map(txRow).join(""):empty("No activity yet. Add your first transaction.");
  const q=($("transactionSearch").value||"").toLowerCase(),f=activityFilters;
  let filtered=state.transactions.filter(t=>!t.isReminder&&(f.type==="All"||t.kind===f.type)&&(!f.account&&!accountActivityFilter||String(t.accountId)===String(f.account||accountActivityFilter))&&(!f.category||t.category===f.category)&&(!f.from||String(t.date)>=f.from)&&(!f.to||String(t.date)<=f.to)&&(`${t.category} ${t.note} ${t.account||""}`.toLowerCase().includes(q)));

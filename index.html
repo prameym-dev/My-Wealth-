@@ -18,24 +18,25 @@
     </header>
 
     <main>
+      <span id="todayLabel" hidden></span>
       <section id="dashboard" class="page active">
-        <article class="networth-card home-networth">
-          <div class="home-networth-head"><span>Net Worth</span><span class="live-dot">◉</span></div>
+        <article class="networth-card compact-networth">
+          <div class="card-top"><span>Net Worth</span><span class="live-dot">◉</span></div>
           <div class="big-number" id="netWorth">₹0</div>
-          <div class="home-networth-foot"><span>Total assets <strong id="assetTotal">₹0</strong></span><span>Liabilities <strong id="debtTotal">₹0</strong></span></div>
+          <div class="nw-grid"><div><small>Assets</small><strong id="assetTotal">₹0</strong></div><div><small>Liabilities</small><strong id="debtTotal">₹0</strong></div></div>
         </article>
-        <div class="home-wealth-grid">
-          <article class="home-wealth-card"><span class="home-card-icon">▱</span><small>Assets</small><strong id="homeAssets">₹0</strong></article>
-          <article class="home-wealth-card liability-card"><span class="home-card-icon">▣</span><small>Liabilities</small><strong id="homeLiabilities">₹0</strong></article>
-          <article class="home-wealth-card"><span class="home-card-icon">⌁</span><small>Investments</small><strong id="homeInvestments">₹0</strong><small class="positive">Portfolio</small></article>
-          <article class="home-wealth-card"><span class="home-card-icon">▣</span><small>Cash & Bank</small><strong id="homeCash">₹0</strong><small>Accounts & wallets</small></article>
+        <div class="home-summary-grid">
+          <article class="home-summary-card"><span class="home-icon assets-icon">▱</span><small>Assets</small><strong id="homeAssets">₹0</strong></article>
+          <article class="home-summary-card liability-card"><span class="home-icon liability-icon">▣</span><small>Liabilities</small><strong id="homeLiabilities">₹0</strong></article>
+          <article class="home-summary-card"><span class="home-icon investment-icon">▥</span><small>Investments</small><strong id="homeInvestments">₹0</strong></article>
+          <article class="home-summary-card"><span class="home-icon cash-icon">▣</span><small>Cash & Bank</small><strong id="homeCashBank">₹0</strong></article>
         </div>
         <article class="home-month-card">
-          <div class="home-month-head"><h2>This Month</h2><input id="dashMonth" type="month" aria-label="Dashboard month"></div>
-          <div class="home-month-metrics">
-            <div><span class="metric-icon income-icon">↓</span><small>Income</small><strong id="monthIncome">₹0</strong></div>
-            <div><span class="metric-icon expense-icon">↗</span><small>Expense</small><strong id="monthExpense">₹0</strong></div>
-            <div><span class="metric-icon savings-icon">%</span><small>Savings</small><strong id="monthSavings">₹0</strong></div>
+          <div class="section-heading"><h2>This Month</h2><input id="dashMonth" type="month" aria-label="Dashboard month"></div>
+          <div class="home-flow-grid">
+            <div><span class="flow-icon income-icon">↓</span><small>Income</small><strong id="monthIncome">₹0</strong></div>
+            <div><span class="flow-icon expense-icon">↗</span><small>Expense</small><strong id="monthExpense">₹0</strong></div>
+            <div><span class="flow-icon saving-icon">%</span><small>Savings</small><strong id="monthSavings">₹0</strong></div>
           </div>
         </article>
         <div class="section-heading"><h2>Recent Activity</h2><button class="text-btn" data-go="transactions">See all</button></div>
@@ -43,8 +44,8 @@
       </section>
 
       <section id="transactions" class="page">
-        <div class="page-heading"><div><p class="eyebrow">MONEY IN & OUT</p><h1>Transactions</h1></div><button class="primary-btn" id="addTransactionBtn">＋ Add</button></div>
-        <div class="toolbar"><input id="transactionSearch" placeholder="Search transactions"><button class="secondary-btn" id="advancedFilterBtn">Advanced filters</button><button class="text-btn" id="clearAccountFilterBtn" hidden>Clear account</button></div><div id="activeFilterSummary" class="hint"></div>
+        <div class="activity-title-row"><h1>Activity</h1><div class="activity-top-actions"><button class="icon-btn" id="advancedFilterBtn" aria-label="Filter">☷</button><button class="icon-btn" id="addTransactionBtn" aria-label="Add transaction">＋</button></div></div>
+        <div class="activity-month-row"><span>‹</span><strong id="activityMonthLabel">Current activity</strong><span>›</span><button class="budget-inline" id="activityBudgetShortcut" type="button">◎ Set Budget</button></div><div class="activity-type-pills"><button class="selected" data-activity-type="All">All</button><button data-activity-type="Income">Income</button><button data-activity-type="Expense">Expense</button><button data-activity-type="Transfer">Transfer</button></div><div class="toolbar"><input id="transactionSearch" placeholder="Search transactions"><button class="text-btn" id="clearAccountFilterBtn" hidden>Clear account</button></div><div id="activeFilterSummary" class="hint"></div>
         <div class="bulk-toolbar" id="bulkToolbar"><label><input type="checkbox" id="selectAllTx"> Select all</label><strong id="selectedTxCount">0 selected</strong><button class="text-btn" id="deselectAllTx" type="button">Deselect all</button><button class="secondary-btn" id="bulkDeleteBtn" type="button">Delete</button></div><div id="transactionList" class="list-card empty">No transactions recorded.</div>
       </section>
 
