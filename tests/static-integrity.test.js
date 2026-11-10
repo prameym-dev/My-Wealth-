@@ -58,3 +58,14 @@ test('Reconciled historical source entries are excluded from balances and summar
   assert.match(app,/t\.isReminder\|\|t\.isTransferReconciled/);
   assert.match(app,/!t\.isTransferReconciled/);
 });
+
+
+test("Wealth overview includes financial total, four categories, performance and combined Others subtypes", () => {
+  const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
+  const app = fs.readFileSync(path.join(__dirname, "../app.js"), "utf8");
+  for (const id of ["wealthFinancialTotal", "wealthInvested", "wealthCurrentValue", "wealthGain", "wealthXirr", "wealthAllocationBar", "accountList"]) assert.match(html, new RegExp(`id=\"${id}\"`));
+  for (const category of ["Mutual Funds", "Stocks", "ETFs", "Others"]) assert.match(html, new RegExp(`data-investment-category=\"${category}\"`));
+  for (const subtype of ["Bank Deposit / RD", "Fixed Deposit", "Sovereign Gold Bond", "Other Asset"]) assert.ok(html.includes(subtype));
+  assert.match(app, /calculatePortfolioXirr/);
+  assert.match(app, /wealthFinancialTotal/);
+});
