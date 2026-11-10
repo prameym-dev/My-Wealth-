@@ -26,3 +26,11 @@ This build applies the supplied multi-screen reference design across the My Weal
 
 ## Scope and limitations
 This is a reference-led responsive implementation, not a guarantee of literal pixel identity across every iPhone/browser size. Device screenshot QA is still required. The eCAS PDF parser remains safely gated until its MF + demat extraction can be reconciled against statement totals. Live market prices are not enabled in this UI build.
+
+
+## Activity reference update (10 Nov 2026)
+- Activity title moves to the top bar and replaces the app name on this page.
+- Search and advanced filters sit beside Settings.
+- Selection checkboxes precede category icons.
+- The bottom selection tray offers Add, Edit, Copy and Delete.
+- Transaction types have icons and the date field has a trailing calendar glyph.
