@@ -1,0 +1,33 @@
+<!doctype html><html><head><meta charset="utf-8"><title>My Wealth smoke tests</title></head><body>
+<div id="result">RUNNING</div><iframe id="app" src="../index.html" style="width:390px;height:844px;border:0"></iframe>
+<script>
+const result=document.getElementById('result'),frame=document.getElementById('app');let errors=[];
+frame.addEventListener('load',()=>{
+ const w=frame.contentWindow,d=frame.contentDocument;
+ w.addEventListener('error',e=>errors.push(e.message));
+ setTimeout(()=>{
+  const checks=[];const ok=(name,condition)=>checks.push({name,ok:!!condition});
+  ok('Core finance module loaded',!!w.MyWealthCore);
+  ok('Reports view exists',!!d.getElementById('reportMainView'));
+  ok('Settings view exists',!!d.getElementById('settings'));
+  ok('Historical transfer review exists',!!d.getElementById('reviewTransfersBtn'));
+  ok('Investment holding form exists',!!d.getElementById('investmentHoldingForm'));
+  ok('Investment transaction form exists',!!d.getElementById('investmentTransactionForm'));
+  d.getElementById('topSettingsBtn').click();
+  ok('Settings top title is scoped to Settings',!d.getElementById('topSettingsTitle').hidden&&d.getElementById('topSearchBtn').hidden);
+  d.getElementById('topSettingsBackBtn').click();
+  d.querySelector('[data-tab="transactions"]').click();
+  ok('Activity title and search visible only in Activity',!d.getElementById('topActivityTitle').hidden&&!d.getElementById('topSearchBtn').hidden);
+  d.querySelector('[data-tab="reports"]').click();
+  ok('Reports title/filter visible, Activity search hidden',!d.getElementById('topReportTitle').hidden&&!d.getElementById('topFilterBtn').hidden&&d.getElementById('topSearchBtn').hidden);
+  d.querySelector('[data-tab="budgets"]').click();
+  ok('Budget Set Budget action scoped to Budgets',!d.getElementById('topSetBudgetBtn').hidden&&d.getElementById('topFilterBtn').hidden);
+  d.querySelector('[data-tab="transactions"]').click();
+  d.getElementById('addTransactionBtn').click();
+  ok('Add transaction dialog opens from Activity',d.getElementById('entryDialog').open);
+  d.getElementById('entryDialog').close();
+  ok('No uncaught app errors',errors.length===0);
+  const failed=checks.filter(x=>!x.ok);result.textContent=JSON.stringify({passed:checks.length-failed.length,total:checks.length,failed,errors});document.body.dataset.testResult=failed.length||errors.length?'FAIL':'PASS';
+ },1800);
+});
+</script></body></html>
