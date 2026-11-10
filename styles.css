@@ -33,3 +33,36 @@ html[data-theme="navy"]{color-scheme:dark;--ink:#e7edf7;--muted:#a4b2c7;--green:
 .bulk-toolbar{display:flex;align-items:center;gap:12px;padding:10px 2px;position:sticky;top:0;background:var(--surface,#f5f8f6);z-index:3}.bulk-toolbar:not(.has-selection){opacity:.75}.bulk-toolbar button{margin-left:auto}.tx-select{padding:6px}.transaction-row{cursor:pointer}.transaction-row:active{opacity:.8}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.detail-grid p{margin:0;padding:12px;background:var(--surface-2,#f1f4f2);border-radius:12px;display:flex;flex-direction:column;gap:5px}.detail-grid small{color:var(--muted,#71817b)}
 :root[data-accent="blue"]{--accent:#2876c7;--accent-soft:#e5f0fc} :root[data-accent="teal"]{--accent:#138b83;--accent-soft:#e1f5f2} :root[data-accent="purple"]{--accent:#8054bd;--accent-soft:#f0e9fa} :root[data-accent="orange"]{--accent:#d97724;--accent-soft:#fff0e2}
 :root[data-accent="blue"] .primary-btn,:root[data-accent="blue"] .tab.active{background:#2876c7}:root[data-accent="teal"] .primary-btn,:root[data-accent="teal"] .tab.active{background:#138b83}:root[data-accent="purple"] .primary-btn,:root[data-accent="purple"] .tab.active{background:#8054bd}:root[data-accent="orange"] .primary-btn,:root[data-accent="orange"] .tab.active{background:#d97724}
+
+/* My Wealth layout repair: each screen scrolls inside the app frame. */
+html,body{height:100%;min-height:100%;overflow:hidden}
+body{min-height:100dvh}
+.app-shell{height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding-bottom:0}
+.topbar{flex:0 0 auto;position:relative;top:auto}
+main{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding-bottom:24px}
+.page{display:none;min-height:100%;overflow:visible}
+.page.active{display:block}
+.tabbar{position:relative;left:auto;bottom:auto;transform:none;width:100%;flex:0 0 auto;padding-bottom:calc(9px + env(safe-area-inset-bottom));z-index:10}
+@media(min-width:600px){body{padding:0}.app-shell{min-height:0;height:100dvh;border-radius:0;overflow:hidden}.topbar{border-radius:0}.tabbar{bottom:auto;border-radius:0}}
+
+/* Accent colour is the app-wide chrome palette, independent of display mode. */
+:root{--accent:#1b6b52;--accent-dark:#102f27;--accent-soft:#e4f1e9;--accent-border:#cfe2d6}
+:root[data-accent="green"]{--accent:#1b6b52;--accent-dark:#102f27;--accent-soft:#e4f1e9;--accent-border:#cfe2d6}
+:root[data-accent="blue"]{--accent:#2867b2;--accent-dark:#173b68;--accent-soft:#e5f0fc;--accent-border:#cbdcf1}
+:root[data-accent="teal"]{--accent:#138b83;--accent-dark:#0b4644;--accent-soft:#e1f5f2;--accent-border:#c3e7e2}
+:root[data-accent="purple"]{--accent:#8054bd;--accent-dark:#392653;--accent-soft:#f0e9fa;--accent-border:#dfd0f0}
+:root[data-accent="orange"]{--accent:#d97724;--accent-dark:#66370f;--accent-soft:#fff0e2;--accent-border:#f2d7bc}
+.topbar{background:var(--accent-dark)!important}
+.brand-mark{background:var(--accent-soft)!important;color:var(--accent)!important}
+.primary-btn{background:var(--accent)!important}
+.text-btn,.tab.active{color:var(--accent)!important}
+.tab.active span{background:var(--accent-soft)!important}
+.networth-card{background:linear-gradient(135deg,var(--accent-dark),var(--accent))!important}
+.cashflow,.summary-strip,.secondary-btn,.segmented button.selected{background:var(--accent-soft)!important;border-color:var(--accent-border)!important;color:var(--accent-dark)!important}
+.metric,.list-card,.form-card,.settings-card,.budget-item{border-color:var(--accent-border)}
+.row-icon{background:var(--accent-soft);color:var(--accent)}
+.progress span{background:var(--accent)}
+input:focus,select:focus{outline-color:var(--accent)}
+.tabbar{border-top-color:var(--accent-border)}
+html[data-theme="dark"] .cashflow,html[data-theme="dark"] .summary-strip,html[data-theme="dark"] .secondary-btn,html[data-theme="dark"] .segmented button.selected{background:color-mix(in srgb,var(--accent) 24%,#18231e)!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-theme="dark"] .tab.active span{background:color-mix(in srgb,var(--accent) 28%,#18231e)!important}
