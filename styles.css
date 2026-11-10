@@ -437,3 +437,49 @@ html[data-theme="dark"] .report-section-tabs{background:#202c26}
 html[data-theme="dark"] .report-section-tabs button.selected{background:var(--accent-dark);color:#fff}
 @media(prefers-color-scheme:dark){html[data-theme="system"]{--white:#202c26;--bg:#111a16;--line:#34443b;--ink:#e7efe9;--muted:#a6b5ac}html[data-theme="system"] .home-month-card,html[data-theme="system"] .budget-gauge-card,html[data-theme="system"] #budgetList.budget-stack,html[data-theme="system"] .budget-edit-list,html[data-theme="system"] .budget-editor-month,html[data-theme="system"] .settings-group,html[data-theme="system"] .report-category-list,html[data-theme="system"] .report-line-chart,html[data-theme="system"] .report-total-card,html[data-theme="system"] .report-category-item{background:#202c26!important;color:var(--ink)!important;border-color:#34443b!important}html[data-theme="system"] .report-total-card>span,html[data-theme="system"] .report-total-card>small{color:#b5c5bb!important}html[data-theme="system"] .report-donut-hole{background:#202c26!important}html[data-theme="system"] .budget-edit-input-wrap{background:#17221c;border-color:#3b4b42}}
 @media(max-width:390px){.budget-edit-row{grid-template-columns:31px minmax(0,1fr) minmax(98px,39%);gap:7px;min-height:52px}.budget-edit-row>strong{font-size:11px}#reportFilterDialog .dialog-form{padding:16px}#reportFilterDialog .report-filter-grid{gap:8px}}
+
+/* Wealth overview refresh — investment-led, with cash held in Accounts. */
+#wealth{padding-top:18px}
+.wealth-heading{display:flex;align-items:center;justify-content:space-between;margin:0 0 15px}
+.wealth-heading h1{font:800 27px Manrope;margin:2px 0 0;letter-spacing:-.7px}
+.wealth-heading .eyebrow{margin:0;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1.1px}
+.wealth-heading .icon-btn{width:42px;height:42px;border:1px solid var(--line);border-radius:14px;background:var(--white);display:grid;place-items:center}
+.wealth-heading svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.wealth-hero{border-radius:22px;padding:20px 19px 15px;background:linear-gradient(140deg,#123f35,#1d6b50);color:#fff;box-shadow:0 10px 25px rgba(16,65,49,.13);margin-bottom:20px}
+.wealth-hero-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#d5e8df;font-weight:650}
+.wealth-live-dot{font-size:9px;color:#a7dfbe}
+.wealth-hero>strong{display:block;font:850 clamp(28px,8vw,36px) Manrope;letter-spacing:-1px;margin:10px 0 2px;overflow-wrap:anywhere}
+.wealth-hero>small{font-size:11px;color:#d1e4db}
+.wealth-hero-bottom{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,.2);margin-top:17px;padding-top:12px;font-size:12px;color:#d5e8df}
+.wealth-hero-bottom b{font-size:14px;color:#fff}
+#wealth .wealth-section-heading{margin-top:0}
+#wealth .investment-grid{margin:10px 0 17px}
+#wealth .investment-tile{position:relative;min-height:130px;padding:15px;border-radius:18px;background:var(--white);border:1px solid var(--line);gap:7px}
+#wealth .investment-tile>span{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:var(--accent-soft);font-size:20px}
+#wealth .investment-tile strong{font-size:13px}
+#wealth .investment-tile b{font-size:20px}
+.wealth-performance-card,.wealth-allocation-card{border:1px solid var(--line);border-radius:18px;background:var(--white);padding:15px;margin-bottom:16px}
+.wealth-performance-card .section-heading{margin:0 0 13px}
+.wealth-performance-card .section-heading h2{font-size:15px}
+.wealth-performance-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 10px}
+.wealth-performance-grid>div{min-width:0;display:flex;flex-direction:column;gap:5px}
+.wealth-performance-grid small{font-size:10px;color:var(--muted)}
+.wealth-performance-grid strong{font:800 16px Manrope;overflow-wrap:anywhere}
+.wealth-performance-note{font-size:10px;color:var(--muted);line-height:1.45;margin:13px 0 0}
+.wealth-allocation-card{padding:15px}
+.wealth-allocation-bar{height:12px;border-radius:20px;overflow:hidden;background:var(--line);display:flex;position:relative}
+.wealth-allocation-bar span{position:absolute;top:0;bottom:0}
+.wealth-allocation-legend{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin-top:13px}
+.wealth-allocation-legend>div{display:grid;grid-template-columns:9px 1fr auto;align-items:center;gap:6px;font-size:10px}
+.wealth-allocation-legend i{width:8px;height:8px;border-radius:50%}
+.wealth-allocation-legend span{color:var(--muted)}
+.wealth-allocation-legend b{font-size:10px}
+.wealth-account-hint{margin:-3px 0 10px;line-height:1.45}
+.wealth-other-subcategories{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.wealth-other-subcategories>div{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:12px;padding:11px}
+.wealth-other-subcategories span{font-size:10px;color:var(--muted)}
+.wealth-other-subcategories strong{font-size:14px}
+.wealth-other-subcategories small{font-size:9px;color:var(--muted)}
+html[data-theme="dark"] .wealth-performance-card,html[data-theme="dark"] .wealth-allocation-card,html[data-theme="dark"] #wealth .investment-tile,html[data-theme="dark"] .wealth-heading .icon-btn{background:#18231e;border-color:var(--line)}
+html[data-theme="dark"] .wealth-hero{background:linear-gradient(140deg,#102b24,#174a39)}
+@media(max-width:390px){.wealth-hero{padding:18px 16px}.wealth-performance-card,.wealth-allocation-card{padding:13px}.wealth-performance-grid strong{font-size:14px}.wealth-allocation-legend{gap:9px 7px}}

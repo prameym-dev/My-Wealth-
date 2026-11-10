@@ -15,3 +15,9 @@ JavaScript syntax: `node --check app.js` — passed.
 ## Manual/device verification still required
 
 The package has not been exercised on the user's iPhone or against the deployed GitHub Pages origin in this run. Confirm modal sizing, iOS date input rendering, nested Settings back navigation, Set Budget save/persistence, and dark-mode surfaces on device before treating this as a fully end-to-end release.
+
+
+## Wealth overview update
+- `node --check app.js` — passed after the Wealth page update.
+- `npm test` — 16 passed, 0 failed after the Wealth page update.
+- Wealth-specific browser interaction and iPhone visual QA have not yet been run.

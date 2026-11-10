@@ -3,6 +3,7 @@
 This build applies the supplied multi-screen reference design across the My Wealth iPhone PWA.
 
 ## Included
+- Wealth overview with Total Financial Wealth (investment value plus Accounts balances), four investment categories, portfolio performance, gain/loss, XIRR when cash-flow history supports it, and allocation. Others groups Bank Deposits/RDs, Fixed Deposits, Sovereign Gold Bonds and Other Assets under one category.
 - Consistent forest-green header and bottom navigation, rounded active-tab treatment, pale mint canvas and matching cards/buttons.
 - Home dashboard summary cards, monthly cash-flow summary and compact recent activity.
 - Activity date-grouped transactions, month navigation, type filters, advanced filters and long-press multi-select with Select All / Deselect All and bulk Add / Edit / Categorise / Delete actions.

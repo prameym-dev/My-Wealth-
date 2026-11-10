@@ -13,3 +13,13 @@
 ## Deferred
 - Wealth tab visual overhaul and live market-price updates remain the next phase.
 - iPhone/GitHub Pages end-to-end verification is still required.
+
+
+## Phase 6 — Wealth overview design (10 Nov 2026)
+- Reworked the Wealth landing page around Total Financial Wealth, the four investment categories, portfolio performance, asset allocation, Accounts, other assets and liabilities.
+- Bank account balances remain managed in Accounts and are included once in Total Financial Wealth; no duplicate Bank Accounts investment category is added.
+- Others remains one top-level category, with subtypes for Bank Deposit / RD, Fixed Deposit, Sovereign Gold Bond and Other Asset.
+- Added invested amount, current value, gain/loss and an XIRR estimate based on dated recorded cash flows. XIRR is withheld when the recorded history is insufficient.
+- Existing IndexedDB database and record structure are retained; new holding subtype is an optional field on investment records.
+- Manual/live price feed integration and detailed FD/SGB terms (rates, maturity, coupon and redemption schedules) remain follow-on work.
+- Browser/device QA on iPhone remains required.

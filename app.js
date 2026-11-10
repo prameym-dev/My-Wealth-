@@ -154,18 +154,43 @@ function render(){
  const acc=state.accounts||[];const al=$("accountList");al.className="list-card"+(acc.length?"":" empty");al.innerHTML=acc.length?acc.map(a=>`<div class="list-row account-row" data-account-open="${a.id}"><div class="row-icon">${a.type==="Wallet"?"◉":"▣"}</div><div class="row-main"><strong>${esc(a.name)} ${a.closed?"(Closed)":""}</strong><small>${esc(a.type)} · ${a.closed?"Historical records retained":"Tap to view transactions"}</small></div><div class="row-amount">${money(accountBalance(a))}</div><button class="text-btn" data-account-toggle="${a.id}">${a.closed?"Reopen":"Close"}</button></div>`).join(""):empty("No accounts yet. Import Bluecoins or add an account.");document.querySelectorAll("[data-account-toggle]").forEach(b=>b.onclick=async e=>{e.stopPropagation();const a=state.accounts.find(x=>x.id===b.dataset.accountToggle);if(!a)return;a.closed=!a.closed;a.closedAt=a.closed?new Date().toISOString():null;if(!(await persist()))return;toast(a.closed?"Account closed. History retained.":"Account reopened");});document.querySelectorAll("[data-account-open]").forEach(r=>r.onclick=e=>{if(e.target.closest("button"))return;accountActivityFilter=r.dataset.accountOpen;activityFilters.account="";nav("transactions");});
  renderBudgets();renderReports();bindDeletes();
 }
+function calculatePortfolioXirr(rows){
+ const flows=[];
+ for(const t of rows){const amount=Math.abs(Number(t.amount)||0);if(!amount||!t.date)continue;let signed=0;if(["Purchase","SIP","Fee"].includes(t.type))signed=-amount;else if(["Redemption","Dividend"].includes(t.type))signed=amount;else continue;flows.push({date:new Date(t.date+"T12:00:00"),amount:signed});}
+ const value=sum(state.investments||[],h=>Number(h.value)||0);if(value>0)flows.push({date:new Date(),amount:value});
+ if(!flows.some(x=>x.amount<0)||!flows.some(x=>x.amount>0))return null;
+ flows.sort((a,b)=>a.date-b.date);const first=flows[0].date;
+ const npv=r=>flows.reduce((a,f)=>a+f.amount/Math.pow(1+r,Math.max(0,(f.date-first)/86400000)/365),0);
+ let lo=-0.9999,hi=10; if(npv(lo)*npv(hi)>0)return null;
+ for(let i=0;i<160;i++){const mid=(lo+hi)/2;if(npv(mid)>0)lo=mid;else hi=mid;}
+ const result=(lo+hi)/2;return Number.isFinite(result)&&result>-1?result*100:null;
+}
 function renderInvestments(){
  const rows=Array.isArray(state.investments)?state.investments:[],groups={"Mutual Funds":[],Stocks:[],ETFs:[],Others:[]};
  rows.forEach(h=>(groups[h.category]||groups.Others).push(h));
- const total=sum(rows,h=>Number(h.value)||0);$("investmentTotal").textContent=money(total);
+ const total=sum(rows,h=>Number(h.value)||0);if($("investmentTotal"))$("investmentTotal").textContent=money(total);
  const ids={"Mutual Funds":["mfValue","mfCount"],Stocks:["stockValue","stockCount"],ETFs:["etfValue","etfCount"],Others:["otherValue","otherCount"]};
  Object.entries(groups).forEach(([k,a])=>{$(ids[k][0]).textContent=money(sum(a,h=>Number(h.value)||0));$(ids[k][1]).textContent=`${a.length} holdings`;});
+ const bank=sum((state.accounts||[]).filter(a=>!a.closed),accountBalance),financial=bank+total;
+ if($("wealthFinancialTotal"))$("wealthFinancialTotal").textContent=money(financial);
+ const invested=sum(rows,h=>Number(h.cost)||0),costKnown=rows.length>0&&rows.every(h=>h.cost!==null&&h.cost!==undefined&&Number.isFinite(Number(h.cost))),gain=costKnown?total-invested:null;
+ if($("wealthInvested"))$("wealthInvested").textContent=costKnown?money(invested):"Incomplete";
+ if($("wealthCurrentValue"))$("wealthCurrentValue").textContent=money(total);
+ if($("wealthGain")){ $("wealthGain").textContent=gain===null?"—":money(gain);$("wealthGain").className=gain===null?"":gain>=0?"positive":"negative"; }
+ const xirr=calculatePortfolioXirr(state.investmentTransactions||[]);if($("wealthXirr"))$("wealthXirr").textContent=xirr===null?"—":`${xirr>=0?"+":""}${xirr.toFixed(2)}%`;
+ if($("wealthPerformanceNote"))$("wealthPerformanceNote").textContent=xirr===null?"XIRR needs dated cash-flow transactions with both investments and proceeds. Incomplete history is not estimated.":"XIRR is estimated from recorded dated investment cash flows and current portfolio value.";
+ const colors={"Mutual Funds":"#24795b",Stocks:"#5a8dba",ETFs:"#c49a45",Others:"#8c79b8"};
+ const alloc=Object.entries(groups).map(([name,a])=>({name,value:sum(a,h=>Number(h.value)||0)})).filter(x=>x.value>0);
+ const bar=$("wealthAllocationBar"),legend=$("wealthAllocationLegend");
+ if(bar){let cursor=0;bar.innerHTML=alloc.map(x=>{const w=total?x.value/total*100:0;const html=`<span title="${esc(x.name)} ${w.toFixed(1)}%" style="left:${cursor}%;width:${w}%;background:${colors[x.name]}"></span>`;cursor+=w;return html;}).join("");}
+ if(legend)legend.innerHTML=alloc.length?alloc.map(x=>`<div><i style="background:${colors[x.name]}"></i><span>${esc(x.name)}</span><b>${total?(x.value/total*100).toFixed(1):0}%</b></div>`).join(""):empty("Add investments to see your allocation.");
 }
 document.querySelectorAll("[data-investment-category]").forEach(b=>b.addEventListener("click",()=>openInvestmentCategory(b.dataset.investmentCategory)));
 function openInvestmentCategory(category){
  const rows=(state.investments||[]).filter(h=>h.category===category),value=sum(rows,h=>Number(h.value)||0),cost=sum(rows,h=>Number(h.cost)||0),costKnown=rows.length>0&&rows.every(h=>h.cost!==null&&h.cost!==undefined),gain=costKnown?value-cost:null,returnPct=costKnown&&cost>0?gain/cost*100:null;
  $("investmentDetailTitle").textContent=category;
  $("investmentDetailSummary").innerHTML=`<div class="investment-detail-tabs"><button type="button" class="selected" data-investment-detail-tab="overview">Overview</button><button type="button" data-investment-detail-tab="holdings">Holdings</button><button type="button" data-investment-detail-tab="transactions">Transactions</button></div><div class="summary-strip"><span>Current valuation</span><strong>${money(value)}</strong></div><div class="detail-grid"><p><small>Known invested cost</small><strong>${money(cost)}</strong></p><p><small>Gain / loss</small><strong class="${gain===null?"":gain>=0?"positive":"negative"}">${gain===null?"Cost data incomplete":money(gain)}</strong></p><p><small>Return</small><strong class="${returnPct===null?"":returnPct>=0?"positive":"negative"}">${returnPct===null?"—":returnPct.toFixed(2)+"%"}</strong></p><p><small>Holdings</small><strong>${rows.length}</strong></p></div>`;
+ if(category==="Others"){$("investmentDetailSummary").innerHTML+=`<div class="wealth-other-subcategories">${["Bank Deposit / RD","Fixed Deposit","Sovereign Gold Bond","Other Asset"].map(type=>{const subset=rows.filter(h=>(h.assetType||"Other Asset")===type);return `<div><span>${esc(type)}</span><strong>${money(sum(subset,h=>Number(h.value)||0))}</strong><small>${subset.length} holdings</small></div>`;}).join("")}</div>`;}
  renderInvestmentHoldingList(category);
  document.querySelectorAll("[data-investment-detail-tab]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-investment-detail-tab]").forEach(x=>x.classList.toggle("selected",x===b));if(b.dataset.investmentDetailTab==="transactions"){const ids=new Set(rows.map(h=>String(h.id)));renderInvestmentTransactions(ids,"investmentHoldingList");}else renderInvestmentHoldingList(category);});
  showDialog("investmentDetailDialog");
@@ -177,10 +202,13 @@ function renderInvestmentHoldingList(category){
 }
 function openHoldingEditor(holdingId=null){
  editingHoldingId=holdingId;const h=holdingId?(state.investments||[]).find(x=>String(x.id)===String(holdingId)):null;
- $("investmentHoldingTitle").textContent=h?"Edit investment holding":"Add investment holding";$("holdingCategory").value=h?.category||"Mutual Funds";$("holdingName").value=h?.name||"";$("holdingIsin").value=h?.isin||"";$("holdingAccount").value=h?.folio||h?.account||"";$("holdingUnits").value=h?.units??0;$("holdingCost").value=h?.cost??0;$("holdingValue").value=h?.value??"";$("deleteHoldingBtn").hidden=!h;showDialog("investmentHoldingDialog");
+ $("investmentHoldingTitle").textContent=h?"Edit investment holding":"Add investment holding";$("holdingCategory").value=h?.category||"Mutual Funds";$("holdingOtherType").value=h?.assetType||"Other Asset";$("holdingOtherTypeWrap").hidden=$("holdingCategory").value!=="Others";$("holdingName").value=h?.name||"";$("holdingIsin").value=h?.isin||"";$("holdingAccount").value=h?.folio||h?.account||"";$("holdingUnits").value=h?.units??0;$("holdingCost").value=h?.cost??0;$("holdingValue").value=h?.value??"";$("deleteHoldingBtn").hidden=!h;showDialog("investmentHoldingDialog");
 }
 $("addInvestmentHoldingBtn").onclick=()=>openHoldingEditor();
-$("investmentHoldingForm").onsubmit=async e=>{e.preventDefault();const payload={category:$("holdingCategory").value,name:$("holdingName").value.trim(),isin:$("holdingIsin").value.trim(),folio:$("holdingAccount").value.trim(),units:Number($("holdingUnits").value)||0,cost:Number($("holdingCost").value)||0,value:Number($("holdingValue").value)||0,source:"Manual",updatedAt:new Date().toISOString()};if(!payload.name||payload.value<0)return;const before=cloneState();let h=state.investments.find(x=>String(x.id)===String(editingHoldingId));if(h)Object.assign(h,payload);else state.investments.push({id:id(),...payload});if(!(await persistWithRollback(before)))return;$("investmentHoldingDialog").close();editingHoldingId=null;toast("Investment holding saved");};
+$("holdingCategory").addEventListener("change",()=>{$("holdingOtherTypeWrap").hidden=$("holdingCategory").value!=="Others";});
+$("wealthSettingsShortcut").onclick=()=>nav("settings");
+$("wealthManageAccountsBtn").onclick=()=>{$("accountList").scrollIntoView({behavior:"smooth",block:"start"});};
+$("investmentHoldingForm").onsubmit=async e=>{e.preventDefault();const payload={category:$("holdingCategory").value,assetType:$("holdingCategory").value==="Others"?$("holdingOtherType").value:null,name:$("holdingName").value.trim(),isin:$("holdingIsin").value.trim(),folio:$("holdingAccount").value.trim(),units:Number($("holdingUnits").value)||0,cost:Number($("holdingCost").value)||0,value:Number($("holdingValue").value)||0,source:"Manual",updatedAt:new Date().toISOString()};if(!payload.name||payload.value<0)return;const before=cloneState();let h=state.investments.find(x=>String(x.id)===String(editingHoldingId));if(h)Object.assign(h,payload);else state.investments.push({id:id(),...payload});if(!(await persistWithRollback(before)))return;$("investmentHoldingDialog").close();editingHoldingId=null;toast("Investment holding saved");};
 $("deleteHoldingBtn").onclick=async()=>{if(!editingHoldingId||!confirm("Delete this holding? Its transaction history will be retained."))return;const before=cloneState();state.investments=state.investments.filter(x=>String(x.id)!==String(editingHoldingId));if(!(await persistWithRollback(before)))return;$("investmentHoldingDialog").close();editingHoldingId=null;toast("Holding deleted");};
 function populateInvestmentHoldingSelect(selected="",toSelected=""){const opts=(state.investments||[]).map(h=>`<option value="${esc(h.id)}">${esc(h.name||h.isin||"Holding")}</option>`).join("");const el=$("investmentTxHolding"),to=$("investmentTxToHolding");el.innerHTML=opts;to.innerHTML=opts;if(selected)el.value=selected;if(toSelected)to.value=toSelected;}
 function openInvestmentTxEditor(txId=null){editingInvestmentTxId=txId;const t=txId?(state.investmentTransactions||[]).find(x=>String(x.id)===String(txId)):null;populateInvestmentHoldingSelect(t?.holdingId,t?.toHoldingId);$("investmentTxToUnits").value=t?.toUnits??"";$("investmentTransactionTitle").textContent=t?"Edit investment transaction":"Add investment transaction";$("investmentTxType").value=t?.type||"Purchase";$("investmentTxDate").value=t?.date||new Date().toISOString().slice(0,10);$("investmentTxAmount").value=t?.amount??"";$("investmentTxUnits").value=t?.units??"";$("investmentTxPrice").value=t?.price??"";$("investmentTxNote").value=t?.note||t?.description||"";$("deleteInvestmentTxBtn").hidden=!t;updateInvestmentSwitchFields();showDialog("investmentTransactionDialog");}
