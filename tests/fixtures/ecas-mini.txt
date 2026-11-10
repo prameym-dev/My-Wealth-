@@ -1,0 +1,39 @@
+CONSOLIDATED ACCOUNT STATEMENT (CAS) FOR SECURITIES HELD IN DEMAT FORM AND INVESTMENTS IN MUTUAL FUNDS
+Statement for the period from 01-Oct-2026 to 31-Oct-2026
+Total Portfolio Value 500.00
+CDSL Demat Accounts 100.00
+Mutual Fund Folios 400.00
+Consolidated Portfolio for Accounts for the Month
+Asset Class Value Percentage
+Equity 70.00 14.00
+Mutual Fund Folios 400.00 80.00
+Mutual Funds Held in Demat Form 20.00 4.00
+Others 10.00 2.00
+Total 500.00 100.00
+AMC Name : Alpha AMC
+Scheme Name : Alpha Equity Fund Scheme Code : ALPHA
+Folio No : FOLIO-A
+ISIN : INF111111111
+AMC Name : Beta AMC
+Scheme Name : Beta Debt Fund Scheme Code : BETA
+Folio No : FOLIO-B
+ISIN : INF222222222
+DP Name : DEMAT ONE BO ID : 1234567890123456
+HOLDING STATEMENT AS ON 31-10-2026
+INE123456789 STOCK COMPANY EQUITY SHARES 1.000 -- -- -- 1.000 70.0000 70.00
+INF123456789 ETF GOLD BEES 2.000 -- -- -- 2.000 10.0000 20.00
+INE987654321 SAMPLE REIT 1.000 -- -- -- 1.000 10.0000 10.00
+Portfolio Value 100.00 as on 31-10-2026
+MUTUAL FUND UNITS HELD WITH MF/RTA
+ISIN : INF111111111
+15-10-2026 Normal Purchase 100.00 10.0000 10.0000 10.000
+MUTUAL FUND UNITS HELD AS ON 31-10-2026
+ALPHA - Alpha Equity Fund
+INF111111111 FOLIO-A 100.000 10.0000 200.00 250.00 50.00 25.00
+BETA - Beta Debt Fund
+INF222222222 FOLIO-B 50.000 20.0000 100.00 150.00 50.00 50.00
+Grand Total 300.00 400.00
+Consolidated Portfolio Valuation for Year
+Sep 2026 450.00
+Oct 2026 500.00
+Consolidated Portfolio for Accounts
