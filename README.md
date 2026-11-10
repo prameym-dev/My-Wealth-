@@ -23,3 +23,10 @@ This update is based on the supplied `My-Wealth--main.zip` source and retains th
 4. Reopen the Home Screen app. The service-worker cache version has been incremented.
 
 Do not clear Safari website data or delete the Home Screen app. The existing IndexedDB database is preserved by this source update.
+
+
+## UI refresh (November 2026)
+- Refined iPhone layout to match the approved My Wealth concept: deep-green header and bottom navigation, compact cards, consistent spacing and rounded controls.
+- Reworked settings row spacing and budget month / Set Budget alignment to prevent narrow-screen overlap.
+- Preserved existing app state keys, IndexedDB database name, and transaction data model.
+- Existing investment import remains safely disabled until CDSL demat extraction can be validated against statement totals.
