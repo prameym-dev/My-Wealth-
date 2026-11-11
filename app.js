@@ -37,12 +37,11 @@ async function initStorage(){
    await dbPut("app-state",legacy);
    state=legacy;
  }
- // Remove the imported Bluecoins MF reminder series only. Completed MF expenses,
- // balances, accounts, and all unrelated reminders/transactions remain untouched.
- const amountNormalization=MyWealthCore.normalizeBluecoinsAmounts(state);
- const openingMigration=MyWealthCore.migrateBluecoinsOpeningBalances(state);
- const removedMfReminders=MyWealthCore.removeImportedBluecoinsMfReminders(state);
- if(amountNormalization.corrected>0||openingMigration.migrated>0||removedMfReminders>0)await dbPut("app-state",state);
+ // Legacy Bluecoins repairs are isolated from native My Wealth JSON restores.
+ // A restored native backup must survive restart byte-for-byte at the data level:
+ // do not re-migrate opening balances or remove its recurring reminders.
+ const migration=MyWealthCore.applyLegacyBluecoinsStartupMigrations(state);
+ if(migration.corrected>0||migration.migrated>0||migration.removedReminders>0)await dbPut("app-state",state);
  try{localStorage.setItem("mywealth-storage-mode","indexeddb-v1");}catch{}
  return true;
 }
@@ -426,7 +425,7 @@ function csvCell(v){return `"${String(v??"").replace(/"/g,'""')}"`;}
 $("wealthTemplateBtn").onclick=()=>download("my-wealth-holdings-template.csv",[["category","subcategory","name","isin","folio","units","invested amount","current value"],["Mutual Funds","","Example Fund","INF000000000","123456",10,10000,12000],["Stocks","","Example Ltd","INE000000000", "Demat",5,5000,6000],["Others","Fixed Deposit","Example Bank FD","","FD account",1,100000,105000]].map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv");
 $("transactionTemplateBtn").onclick=()=>download("my-wealth-transactions-template.csv",[["date","description","amount","type","category","account"],["2026-11-01","Salary",50000,"Income","Salary","Main Bank"],["2026-11-02","Groceries",-1500,"Expense","Groceries","Main Bank"],["2026-11-03","Transfer to savings",-5000,"Transfer","Transfer","Main Bank"]].map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv");
 $("exportJsonBtn").onclick=()=>download("my-wealth-backup.json",JSON.stringify(state,null,2),"application/json");
-$("restoreJsonInput").onchange=async e=>{const before=cloneState();try{const file=e.target.files?.[0];if(!file) return;const obj=JSON.parse(await file.text());if(!obj||typeof obj!=="object"||!Array.isArray(obj.transactions))throw Error("Invalid My Wealth backup: transactions are missing");if(!confirm("Replace all current local data with this backup?"))return;const restored={...emptyState(),...obj};for(const key of ["assets","liabilities","budgets","accounts","categories","investments","investmentTransactions","investmentSnapshots","netWorthSnapshots"])if(!Array.isArray(restored[key]))restored[key]=[];state=restored;if(!(await persistWithRollback(before)))throw Error("Could not save restored backup; previous data was retained");toast("My Wealth backup restored successfully");}catch(err){state=before;render();toast("Restore failed: "+err.message);}e.target.value="";};
+$("restoreJsonInput").onchange=async e=>{const before=cloneState();try{const file=e.target.files?.[0];if(!file) return;const obj=JSON.parse(await file.text());if(!obj||typeof obj!=="object"||!Array.isArray(obj.transactions))throw Error("Invalid My Wealth backup: transactions are missing");if(!confirm("Replace all current local data with this backup?"))return;const restored={...emptyState(),...obj};for(const key of ["assets","liabilities","budgets","accounts","categories","investments","investmentTransactions","investmentSnapshots","netWorthSnapshots"])if(!Array.isArray(restored[key]))restored[key]=[];restored.myWealthRestore={source:"json",version:1,restoredAt:new Date().toISOString()};state=restored;if(!(await persistWithRollback(before)))throw Error("Could not save restored backup; previous data was retained");toast("My Wealth backup restored successfully");}catch(err){state=before;render();toast("Restore failed: "+err.message);}e.target.value="";};
 // CSV and Excel import helpers. Excel support is loaded only when an .xls/.xlsx file is selected.
 let sheetJsPromise=null;
 function loadSheetJS(){if(window.XLSX)return Promise.resolve(window.XLSX);if(!sheetJsPromise)sheetJsPromise=new Promise((resolve,reject)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";sc.onload=()=>window.XLSX?resolve(window.XLSX):reject(Error("Excel reader could not be loaded"));sc.onerror=()=>reject(Error("Could not load Excel support. Check your internet connection and try again."));document.head.appendChild(sc);});return sheetJsPromise;}

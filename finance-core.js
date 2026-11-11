@@ -235,6 +235,17 @@
     state.transactions=state.transactions.filter(t=>!(t.source==="Bluecoins"&&t.isReminder===true&&String(t.category||t.sourceCategory||"").trim().toLowerCase()==="investment (buy)"&&String(t.account||"").trim().toLowerCase()==="sbi"&&String(t.note||"").trim().toLowerCase()==="mf"));
     return before-state.transactions.length;
   }
+  // Legacy Bluecoins repair is a one-time compatibility migration, never part
+  // of native My Wealth JSON restore. A native backup is an exact saved state:
+  // preserve its opening balances, raw source rows and recurring reminders.
+  function applyLegacyBluecoinsStartupMigrations(state){
+    if(!state||!Array.isArray(state.transactions))return {skipped:false,corrected:0,migrated:0,removedReminders:0};
+    if(state.myWealthRestore?.source==="json")return {skipped:true,corrected:0,migrated:0,removedReminders:0};
+    const amounts=normalizeBluecoinsAmounts(state);
+    const openings=migrateBluecoinsOpeningBalances(state);
+    const removedReminders=removeImportedBluecoinsMfReminders(state);
+    return {skipped:false,corrected:amounts.corrected,migrated:openings.migrated,removedReminders};
+  }
   function upsertBluecoinsImport(state,payload,makeId){
     if(!payload||!Array.isArray(payload.transactions)||!Array.isArray(payload.accounts))throw Error("This is not a supported My Wealth Bluecoins migration JSON.");
     state.accounts=Array.isArray(state.accounts)?state.accounts:[];state.transactions=Array.isArray(state.transactions)?state.transactions:[];
@@ -295,5 +306,5 @@
     state.ecasMeta={casId:parsed.casId,date:parsed.date,summary:parsed.summary,checks:parsed.checks,importedAt:new Date().toISOString()};
     return {added,updated,transactions:parsed.investmentTransactions.length,snapshots:parsed.historical.length};
   }
-  return {findHistoricalTransferCandidates,reconcileTransferPair,undoTransferReconciliation,accountBalance,normalizeBluecoinsDate,applyInvestmentTransaction,parseEcasText,upsertEcasImport,upsertBluecoinsImport,removeImportedBluecoinsMfReminders,migrateBluecoinsOpeningBalances,normalizeBluecoinsAmounts,parseCasDate};
+  return {findHistoricalTransferCandidates,reconcileTransferPair,undoTransferReconciliation,accountBalance,normalizeBluecoinsDate,applyInvestmentTransaction,parseEcasText,upsertEcasImport,upsertBluecoinsImport,removeImportedBluecoinsMfReminders,migrateBluecoinsOpeningBalances,normalizeBluecoinsAmounts,applyLegacyBluecoinsStartupMigrations,parseCasDate};
 });
