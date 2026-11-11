@@ -59,7 +59,7 @@ async function persist(){
 function cloneState(){return JSON.parse(JSON.stringify(state));}
 async function persistWithRollback(before){const ok=await persist();if(!ok){state=before;render();}return ok;}
 function id(){return crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random();}
-function money(n){return new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Number(n)||0);}
+function money(n){return new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(n)||0);}
 function monthKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function toast(msg){const el=$("toast");el.textContent=msg;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2600);}
@@ -418,8 +418,9 @@ $("settingsAboutBtn").onclick=()=>toast("My Wealth · Private finance tracker");
 storageReady.then(async()=>{recordNetWorthSnapshot();await dbPut("app-state",state);refreshAdvancedFilters();render();}).catch(()=>{});
 
 function download(name,content,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
-// One-time automatic correction for legacy imports that were saved 10,000x too high.
-(async function repairLegacyBluecoinsAmounts(){const legacy=state.transactions.filter(t=>t.source==="Bluecoins"&&t.sourceAmountRaw!==undefined&&!t.amountScaleCorrected);if(legacy.length){legacy.forEach(t=>{t.amount=Math.abs(Number(t.sourceAmountRaw)||0)/1000000;t.amountScaleCorrected=true;});if(state.bluecoinsMeta)state.bluecoinsMeta.amountScaleCorrectedAt=new Date().toISOString();await persist();}})();
+// Normalize every imported Bluecoins amount against its preserved raw source value.
+// This is idempotent and repairs records previously marked corrected with the wrong scale.
+(async function repairLegacyBluecoinsAmounts(){await storageReady;const legacy=state.transactions.filter(t=>t.source==="Bluecoins"&&t.sourceAmountRaw!==undefined&&Number.isFinite(Number(t.sourceAmountRaw)));let changed=0;for(const t of legacy){const expected=Math.abs(Number(t.sourceAmountRaw))/10000;if(Math.abs((Number(t.amount)||0)-expected)>0.0000001){t.amount=expected;changed++;}t.amountScaleCorrected=true;}if(changed){state.bluecoinsMeta={...(state.bluecoinsMeta||{}),amountScaleCorrectedAt:new Date().toISOString(),amountScaleVersion:2,amountScaleCorrectedCount:changed};await persist();}})();
 
 $("exportCsvBtn").onclick=()=>{const rows=[["date","description","amount","type","category"],...state.transactions.filter(t=>!t.isReminder).map(t=>[t.date,t.note,t.kind==="Income"?t.amount:-t.amount,t.kind,t.category])];download("my-wealth-transactions.csv",rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv");};
 function csvCell(v){return `"${String(v??"").replace(/"/g,'""')}"`;}

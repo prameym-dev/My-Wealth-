@@ -201,8 +201,8 @@
       if(!isBluecoinsOpeningBalanceTransaction(t)){keep.push(t);continue;}
       const account=state.accounts.find(a=>String(a.id)===String(t.accountId)) || state.accounts.find(a=>String(a.name||"").trim().toLowerCase()===String(t.account||"").trim().toLowerCase());
       if(!account){keep.push(t);continue;}
-      const amount=Math.abs(toNum(t.amount));
       const raw=t.sourceAmountRaw!==undefined?toNum(t.sourceAmountRaw):0;
+      const amount=raw!==0?Math.abs(raw)/10000:Math.abs(toNum(t.amount));
       const signed=raw!==0?Math.sign(raw)*amount:amount;
       account.openingBalance=toNum(account.openingBalance)+signed;
       account.bluecoinsOpeningBalanceSourceIds=Array.isArray(account.bluecoinsOpeningBalanceSourceIds)?account.bluecoinsOpeningBalanceSourceIds:[];
@@ -238,9 +238,9 @@
       if(sourceId!==undefined&&known.has(String(sourceId))){duplicates++;continue;}
       const from=accountMap.get(String(src.accountId));
       const isOpening=String(src.type||"").trim().toLowerCase()==="new account"||Number(src.transactionTypeID??src.source?.transactionTypeID)===2||String(src.category||"").trim().toLowerCase()==="(new account)";
-      if(isOpening&&from){const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/1000000;from.openingBalance=toNum(from.openingBalance)+(sourceAmountRaw!==0?Math.sign(sourceAmountRaw)*amount:0);from.bluecoinsOpeningBalanceSourceIds=Array.isArray(from.bluecoinsOpeningBalanceSourceIds)?from.bluecoinsOpeningBalanceSourceIds:[];if(sourceId!==undefined)from.bluecoinsOpeningBalanceSourceIds.push(String(sourceId));if(sourceId!==undefined)known.add(String(sourceId));openingBalancesImported++;continue;}
+      if(isOpening&&from){const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/10000;from.openingBalance=toNum(from.openingBalance)+(sourceAmountRaw!==0?Math.sign(sourceAmountRaw)*amount:0);from.bluecoinsOpeningBalanceSourceIds=Array.isArray(from.bluecoinsOpeningBalanceSourceIds)?from.bluecoinsOpeningBalanceSourceIds:[];if(sourceId!==undefined)from.bluecoinsOpeningBalanceSourceIds.push(String(sourceId));if(sourceId!==undefined)known.add(String(sourceId));openingBalancesImported++;continue;}
       const kind=["Income","Expense","Transfer"].includes(src.type)?src.type:"Expense",to=accountMap.get(String(src.counterAccountId));
-      const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/1000000;
+      const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/10000;
       const tx={id:makeId(),source:"Bluecoins",sourceId:sourceId??null,sourceAmountRaw,amountScaleCorrected:true,date:normalizeBluecoinsDate(src.date),amount,kind,category:kind==="Transfer"?"Self transfer":(src.category||"Imported"),note:[src.description,src.notes].filter(Boolean).join(" · "),accountId:from?.id||null,account:from?.name||src.account||"",counterAccountId:kind==="Transfer"?(to?.id||null):null,counterAccount:kind==="Transfer"?(to?.name||src.counterAccount||""):"",transferGroupId:src.transferGroupId||null,isReminder:!!src.isReminder,deletedFlag:src.deletedFlag,labels:Array.isArray(src.labels)?src.labels:[],sourceCategory:src.category||"",sourceParentCategory:src.parentCategory||"",sourceTransferGroupId:src.transferGroupId||null,sourceTypeId:src.source?.transactionTypeID??null,sourceStatus:src.source?.status??null,sourceAccountReference:src.source?.accountReference??null,sourceTransactionCurrency:src.currency||src.source?.transactionCurrency||"INR",sourceConversionRate:src.source?.conversionRateNew??1,reminderMeta:src.isReminder?{frequency:src.source?.reminderFrequency??null,repeatEvery:src.source?.reminderRepeatEvery??null,endingType:src.source?.reminderEndingType??null,startDate:src.source?.reminderStartDate??null,endDate:src.source?.reminderEndDate??null}:null};
       state.transactions.push(tx);if(sourceId!==undefined)known.add(String(sourceId));transactionsAdded++;
     }
