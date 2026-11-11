@@ -229,6 +229,46 @@
     if(migrated)state.bluecoinsMeta={...(state.bluecoinsMeta||{}),openingBalanceMigration:{migrated,amount:total,at:new Date().toISOString()}};
     return {migrated,amount:total};
   }
+  function reminderGroupKey(src){
+    const group=src?.source?.reminderGroupID??src?.reminderMeta?.groupId??src?.reminderGroupId;
+    return group!==undefined&&group!==null&&String(group)!=="0"?String(group):[src?.accountId??src?.account,src?.category,src?.description??src?.note,src?.reminderMeta?.frequency??"monthly"].map(x=>String(x??"").trim().toLowerCase()).join("|");
+  }
+  function upsertBluecoinsReminderSchedules(state,payload,makeId,accountMap=null){
+    state.reminders=Array.isArray(state.reminders)?state.reminders:[];
+    const groups=new Map();
+    for(const src of (payload?.transactions||[])){
+      if(!src?.isReminder||Number(src.deletedFlag)===5)continue;
+      const key=reminderGroupKey(src);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(src);
+    }
+    let added=0;
+    for(const [key,rows] of groups){
+      if(state.reminders.some(r=>String(r.sourceGroupId??"")===key||r.sourceKey===`bluecoins-reminder:${key}`))continue;
+      rows.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+      const first=rows[0],raw=toNum(first.amount),amount=Math.abs(raw)/10000;
+      const frequency=Number(first.source?.reminderFrequency??first.reminderMeta?.frequency);
+      const recurrence=frequency===1?"daily":frequency===2?"weekly":frequency===3?"weekly":frequency===4?"monthly":frequency===5?"quarterly":frequency===6?"yearly":"monthly";
+      state.reminders.push({id:makeId(),source:"Bluecoins reminder",sourceKey:`bluecoins-reminder:${key}`,sourceGroupId:key,title:first.description||first.note||first.category||"Bluecoins reminder",type:String(first.category||"").toLowerCase()==="investment (buy)"?"mf":"bill",amount, dueDate:normDate(first.date),recurrence,category:first.category||"Other",accountId:accountMap?.get(String(first.accountId))?.id??first.accountId??null,leadDays:0,active:true,paidOccurrences:[],sourceOccurrenceCount:rows.length});added++;
+    }
+    return added;
+  }
+  function restoreReminderSchedulesFromTransactions(state,makeId){
+    state.reminders=Array.isArray(state.reminders)?state.reminders:[];
+    const groups=new Map();
+    for(const tx of (state.transactions||[])){
+      if(!tx?.isReminder||Number(tx.deletedFlag)===5)continue;
+      const key=reminderGroupKey(tx);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(tx);
+    }
+    let added=0;
+    for(const [key,rows] of groups){
+      if(state.reminders.some(r=>String(r.sourceGroupId??"")===key||r.sourceKey===`bluecoins-reminder:${key}`))continue;
+      rows.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+      const first=rows[0],meta=first.reminderMeta||{},raw=first.sourceAmountRaw;
+      const amount=Number.isFinite(Number(first.amount))?Math.abs(Number(first.amount)):Math.abs(toNum(raw))/10000;
+      const f=Number(meta.frequency),recurrence=f===2||f===3?"weekly":f===5?"quarterly":f===6?"yearly":"monthly";
+      state.reminders.push({id:makeId(),source:"Bluecoins reminder",sourceKey:`bluecoins-reminder:${key}`,sourceGroupId:key,title:first.note||first.description||first.category||"Bluecoins reminder",type:String(first.category||first.sourceCategory||"").toLowerCase()==="investment (buy)"?"mf":"bill",amount,dueDate:normDate(first.date),recurrence,category:first.category||first.sourceCategory||"Other",accountId:first.accountId??null,leadDays:0,active:true,paidOccurrences:[],sourceOccurrenceCount:rows.length});added++;
+    }
+    return added;
+  }
   function removeImportedBluecoinsMfReminders(state){
     if(!state||!Array.isArray(state.transactions))return 0;
     const before=state.transactions.length;
@@ -268,6 +308,7 @@
       const raws=ids.map(id=>openingBySourceId.get(String(id))).filter(v=>v!==undefined);
       if(raws.length&&Number(account.bluecoinsOpeningBalanceScale)===1000000){const oldContribution=raws.reduce((sum,raw)=>sum+Math.sign(raw)*Math.abs(raw)/1000000,0);const correctContribution=raws.reduce((sum,raw)=>sum+Math.sign(raw)*Math.abs(raw)/10000,0);account.openingBalance=toNum(account.openingBalance)-oldContribution+correctContribution;account.bluecoinsOpeningBalanceScale=10000;}
     }
+    const reminderSchedulesAdded=upsertBluecoinsReminderSchedules(state,payload,makeId,accountMap);
     const known=new Set(state.transactions.filter(t=>t.source==="Bluecoins"&&t.sourceId!==undefined).map(t=>String(t.sourceId)));
     for(const a of state.accounts)for(const sourceId of (a.bluecoinsOpeningBalanceSourceIds||[]))known.add(String(sourceId));
     let transactionsAdded=0,openingBalancesImported=0,duplicates=0;
@@ -288,12 +329,12 @@
       if(isOpening&&from){const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/10000;from.openingBalance=toNum(from.openingBalance)+(sourceAmountRaw!==0?Math.sign(sourceAmountRaw)*amount:0);from.bluecoinsOpeningBalanceSourceIds=Array.isArray(from.bluecoinsOpeningBalanceSourceIds)?from.bluecoinsOpeningBalanceSourceIds:[];if(sourceId!==undefined)from.bluecoinsOpeningBalanceSourceIds.push(String(sourceId));from.bluecoinsOpeningBalanceScale=10000;if(sourceId!==undefined)known.add(String(sourceId));openingBalancesImported++;continue;}
       const kind=["Income","Expense","Transfer"].includes(src.type)?src.type:"Expense",to=accountMap.get(String(src.counterAccountId));
       const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/10000;
-      const tx={id:makeId(),source:"Bluecoins",sourceId:sourceId??null,sourceAmountRaw,amountScaleCorrected:true,sourceAmountDivisor:10000,date:normalizeBluecoinsDate(src.date),amount,kind,category:kind==="Transfer"?"Self transfer":(src.category||"Imported"),note:[src.description,src.notes].filter(Boolean).join(" · "),accountId:from?.id||null,account:from?.name||src.account||"",counterAccountId:kind==="Transfer"?(to?.id||null):null,counterAccount:kind==="Transfer"?(to?.name||src.counterAccount||""):"",transferGroupId:src.transferGroupId||null,isReminder:!!src.isReminder,deletedFlag:src.deletedFlag,labels:Array.isArray(src.labels)?src.labels:[],sourceCategory:src.category||"",sourceParentCategory:src.parentCategory||"",sourceTransferGroupId:src.transferGroupId||null,sourceTypeId:src.source?.transactionTypeID??null,sourceStatus:src.source?.status??null,sourceAccountReference:src.source?.accountReference??null,sourceTransactionCurrency:src.currency||src.source?.transactionCurrency||"INR",sourceConversionRate:src.source?.conversionRateNew??1,reminderMeta:src.isReminder?{frequency:src.source?.reminderFrequency??null,repeatEvery:src.source?.reminderRepeatEvery??null,endingType:src.source?.reminderEndingType??null,startDate:src.source?.reminderStartDate??null,endDate:src.source?.reminderEndDate??null}:null};
+      const tx={id:makeId(),source:"Bluecoins",sourceId:sourceId??null,sourceAmountRaw,amountScaleCorrected:true,sourceAmountDivisor:10000,date:normalizeBluecoinsDate(src.date),amount,kind,category:kind==="Transfer"?"Self transfer":(src.category||"Imported"),note:[src.description,src.notes].filter(Boolean).join(" · "),accountId:from?.id||null,account:from?.name||src.account||"",counterAccountId:kind==="Transfer"?(to?.id||null):null,counterAccount:kind==="Transfer"?(to?.name||src.counterAccount||""):"",transferGroupId:src.transferGroupId||null,isReminder:!!src.isReminder,deletedFlag:src.deletedFlag,labels:Array.isArray(src.labels)?src.labels:[],sourceCategory:src.category||"",sourceParentCategory:src.parentCategory||"",sourceTransferGroupId:src.transferGroupId||null,sourceTypeId:src.source?.transactionTypeID??null,sourceStatus:src.source?.status??null,sourceAccountReference:src.source?.accountReference??null,sourceTransactionCurrency:src.currency||src.source?.transactionCurrency||"INR",sourceConversionRate:src.source?.conversionRateNew??1,reminderMeta:src.isReminder?{groupId:src.source?.reminderGroupID??null,frequency:src.source?.reminderFrequency??null,repeatEvery:src.source?.reminderRepeatEvery??null,endingType:src.source?.reminderEndingType??null,startDate:src.source?.reminderStartDate??null,endDate:src.source?.reminderEndDate??null}:null};
       state.transactions.push(tx);if(sourceId!==undefined)known.add(String(sourceId));transactionsAdded++;
     }
     state.bluecoinsCategoryTree=payload.categories||state.bluecoinsCategoryTree||null;state.bluecoinsReferenceData=payload.referenceData||state.bluecoinsReferenceData||null;
     state.bluecoinsMeta={...(state.bluecoinsMeta||{}),source:payload.source||"Bluecoins",importedAt:new Date().toISOString(),lastImport:{accountsAdded,transactionsAdded,openingBalancesImported,duplicates,sourceCount:payload.transactions.length}};
-    return {accountsAdded,transactionsAdded,openingBalancesImported,duplicates,sourceCount:payload.transactions.length};
+    return {accountsAdded,transactionsAdded,openingBalancesImported,duplicates,reminderSchedulesAdded,sourceCount:payload.transactions.length};
   }
   function upsertEcasImport(state,parsed,makeId){
     state.investments=Array.isArray(state.investments)?state.investments:[];state.investmentTransactions=Array.isArray(state.investmentTransactions)?state.investmentTransactions:[];state.investmentSnapshots=Array.isArray(state.investmentSnapshots)?state.investmentSnapshots:[];
@@ -306,5 +347,5 @@
     state.ecasMeta={casId:parsed.casId,date:parsed.date,summary:parsed.summary,checks:parsed.checks,importedAt:new Date().toISOString()};
     return {added,updated,transactions:parsed.investmentTransactions.length,snapshots:parsed.historical.length};
   }
-  return {findHistoricalTransferCandidates,reconcileTransferPair,undoTransferReconciliation,accountBalance,normalizeBluecoinsDate,applyInvestmentTransaction,parseEcasText,upsertEcasImport,upsertBluecoinsImport,removeImportedBluecoinsMfReminders,migrateBluecoinsOpeningBalances,normalizeBluecoinsAmounts,applyLegacyBluecoinsStartupMigrations,parseCasDate};
+  return {findHistoricalTransferCandidates,reconcileTransferPair,undoTransferReconciliation,accountBalance,normalizeBluecoinsDate,applyInvestmentTransaction,parseEcasText,upsertEcasImport,upsertBluecoinsImport,upsertBluecoinsReminderSchedules,restoreReminderSchedulesFromTransactions,removeImportedBluecoinsMfReminders,migrateBluecoinsOpeningBalances,normalizeBluecoinsAmounts,applyLegacyBluecoinsStartupMigrations,parseCasDate};
 });

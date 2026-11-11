@@ -519,3 +519,7 @@ body.reminders-page-mode .topbar .top-context-title[hidden]{display:none!importa
 .reminder-month-controls input[type=month]{height:46px;min-height:46px;width:100%;min-width:0;padding:0 7px;border:1px solid var(--line);border-radius:12px;background:var(--white);color:var(--text);font:600 13px Manrope;text-align:center}
 .reminder-topbar #addReminderBtn{height:46px;min-height:46px;flex:0 0 auto;width:148px;padding:0 10px;white-space:nowrap;font-size:13px;border-radius:12px}
 @media(max-width:390px){.reminder-topbar{gap:7px}.reminder-topbar .reminder-month-controls{grid-template-columns:30px minmax(0,1fr) 30px;gap:3px}.reminder-month-controls button{height:44px;min-height:44px}.reminder-month-controls input[type=month]{height:44px;min-height:44px;font-size:12px;padding:0 3px}.reminder-topbar #addReminderBtn{width:137px;height:44px;min-height:44px;font-size:12px;padding:0 7px}}
+/* Build 13: give the month picker a little less width beside Add reminder. */
+.reminder-topbar .reminder-month-controls{flex:0 1 54%;}
+.reminder-topbar #addReminderBtn{flex:1 1 0;width:auto;min-width:132px;}
+@media(max-width:390px){.reminder-topbar .reminder-month-controls{flex-basis:53%;}.reminder-topbar #addReminderBtn{min-width:126px;}}
