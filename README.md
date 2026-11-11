@@ -99,3 +99,23 @@ Run `npm test` from the repository root. The 12 automated tests cover CDSL parse
 - Dark-mode cards and report/budget surfaces now use darker neutral surfaces instead of bright white/pastel blocks.
 - Settings main page is simplified; Cloud backup & restore, Import data and Export data each open a dedicated subpage.
 - Hardened advanced-filter category population for both array-based custom categories and Bluecoins' imported object-shaped category metadata.
+
+
+## Reminders & Bills — Build 15
+- The reminders module initializes at application startup, independently of Cloud settings.
+- Deleting a reminder refreshes the monthly list and Home upcoming-payments card immediately.
+- Credit-card reminders select the destination card by account name/type (including legacy accounts such as `Amazon ICICI CC` whose type may be `Other`). At payment time the user selects a bank source; the app creates a self-transfer, not an expense.
+- MF reminders default to ₹20,000, SBI, the 10th of each month and a 09:00 reminder-notification time. The 10th rolls forward over Sundays, second/fourth Saturdays and the 2026 Mumbai bank-holiday dates currently embedded from the RBI calendar. The annual holiday list should be refreshed as RBI publishes it; extra local dates can be stored in `state.bankHolidayDates`.
+- A reminder remains a reminder until payment is recorded. A matching real Bluecoins MF expense (Investment (Buy), note `MF`, same account and amount near the scheduled date) is linked to the occurrence automatically and idempotently; the scheduled Bluecoins reminder source rows are never treated as real expenses.
+- Reminder rows are excluded from dashboard cash flow and budget spending.
+- Notification time is stored per reminder; foreground notifications work while the app is active. Background push still requires a configured push service. The PWA does not initiate bank debits.
+- The month selector is constrained to 44% of the reminder toolbar; Add reminder uses the remaining width.
+
+
+## Build 16 — scheduled transaction auto-booking
+- Fixed-amount reminders can optionally auto-book an expense at the configured due occurrence.
+- Existing MF reminders default to auto-book enabled, with a 10:00 AM booking time, ₹20,000 amount, SBI account, Investment (Buy) category and MF note preserved from the reminder.
+- MF dates move to the next SBI working day using the configured bank holiday calendar and weekend rules.
+- Generated transactions are tagged with reminder ID and occurrence date so repeated checks/restarts cannot duplicate the same scheduled expense.
+- Credit-card reminders are excluded from automatic expense booking; settlement remains a bank-to-credit-card transfer.
+- If the app is closed at the scheduled time, the booking is created on the next app launch/foreground check and backdated to the scheduled date; closed-app execution requires a future server-side scheduler.

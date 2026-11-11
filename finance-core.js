@@ -7,6 +7,53 @@
   const NUM_RE=/-?\d[\d,]*(?:\.\d+)?/g;
   const toNum=v=>Number(String(v??"").replace(/,/g,""))||0;
   const normDate=v=>String(v||"").slice(0,10);
+  const RBI_MUMBAI_HOLIDAYS_2026=new Set(["2026-01-26","2026-02-19","2026-03-03","2026-03-19","2026-03-21","2026-03-26","2026-03-31","2026-04-01","2026-04-03","2026-04-14","2026-05-01","2026-05-28","2026-06-26","2026-08-15","2026-08-26","2026-09-14","2026-10-02","2026-10-20","2026-11-10","2026-11-24","2026-12-25"]);
+  function addDaysISO(date,days){const d=new Date(normDate(date)+"T12:00:00");d.setDate(d.getDate()+days);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
+  function isSbiWorkingDay(date,extra=[]){const d=new Date(normDate(date)+"T12:00:00"),day=d.getDay(),dom=d.getDate(),saturdayOrdinal=Math.ceil(dom/7);if(day===0||(day===6&&(saturdayOrdinal===2||saturdayOrdinal===4)))return false;return !RBI_MUMBAI_HOLIDAYS_2026.has(normDate(date))&&!(extra||[]).includes(normDate(date));}
+  function nextSbiWorkingDay(date,extra=[]){let d=normDate(date),guard=0;while(!isSbiWorkingDay(d,extra)&&guard++<10)d=addDaysISO(d,1);return d;}
+  function monthDayISO(month,day){const [y,m]=String(month).split("-").map(Number),last=new Date(y,m,0).getDate();return `${y}-${String(m).padStart(2,"0")}-${String(Math.min(day,last)).padStart(2,"0")}`;}
+  function reminderDatesForMonth(r,month,holidayDates=[]){
+    const start=normDate(r?.dueDate);if(!/^\d{4}-\d{2}-\d{2}$/.test(start)||!/^\d{4}-\d{2}$/.test(String(month||"")))return [];
+    const [y,m]=month.split("-").map(Number),[sy,sm]=start.slice(0,7).split("-").map(Number),diff=(y-sy)*12+(m-sm);if(diff<0)return [];
+    const day=Number(start.slice(8,10));let due=null;
+    if(r.recurrence==="once"){if(diff===0)due=start;}
+    else if(r.recurrence==="monthly")due=monthDayISO(month,day);
+    else if(r.recurrence==="quarterly"&&diff%3===0)due=monthDayISO(month,day);
+    else if(r.recurrence==="half-yearly"&&diff%6===0)due=monthDayISO(month,day);
+    else if(r.recurrence==="yearly"&&diff%12===0)due=monthDayISO(month,day);
+    else if(r.recurrence==="weekly"){
+      const out=[];let d=start,guard=0;while(d.slice(0,7)<=month&&guard++<500){if(d.slice(0,7)===month)out.push(d);d=addDaysISO(d,7);}return out;
+    }
+    if(!due)return [];
+    if(r.type==="mf"&&r.businessDayRule==="next-bank-working-day")due=nextSbiWorkingDay(due,holidayDates);
+    return [due];
+  }
+  function autoBookDueReminderExpenses(state,now=new Date(),makeId=()=>`scheduled-${Date.now()}-${Math.random()}`){
+    if(!state||!Array.isArray(state.reminders)||!Array.isArray(state.transactions))return {created:0,transactions:[]};
+    const current=now instanceof Date?now:new Date(now),today=`${current.getFullYear()}-${String(current.getMonth()+1).padStart(2,"0")}-${String(current.getDate()).padStart(2,"0")}`,currentMinutes=current.getHours()*60+current.getMinutes();
+    const created=[];
+    for(const r of state.reminders){
+      if(!r||r.active===false||r.autoBook!==true||r.type==="credit-card"||!Number.isFinite(Number(r.amount))||Number(r.amount)<=0)continue;
+      if(r.type==="mf"&&(!r.accountId||!(state.accounts||[]).some(a=>String(a.id)===String(r.accountId))))continue;
+      const start=normDate(r.dueDate);if(!/^\d{4}-\d{2}-\d{2}$/.test(start)||start>today)continue;
+      const threshold=String(r.autoBookTime||"10:00").split(":").map(Number),thresholdMinutes=threshold[0]*60+(threshold[1]||0);
+      let month=start.slice(0,7),guard=0;
+      while(month<=today.slice(0,7)&&guard++<240){
+        for(const dueDate of reminderDatesForMonth(r,month,state.bankHolidayDates||[])){
+          if(dueDate>today||(dueDate===today&&currentMinutes<thresholdMinutes))continue;
+          const occurrenceKey=`${r.id}|${dueDate}`;r.paidOccurrences=Array.isArray(r.paidOccurrences)?r.paidOccurrences:[];
+          const alreadyPaid=r.paidOccurrences.some(p=>p&&(p.occurrenceKey===occurrenceKey||p.dueDate===dueDate));
+          const existing=state.transactions.find(t=>t&&t.reminderId===r.id&&t.reminderOccurrenceDate===dueDate);
+          if(alreadyPaid||existing)continue;
+          const tx={id:makeId(),date:dueDate,amount:Number(r.amount),kind:"Expense",category:r.type==="mf"?"Investment (Buy)":(r.category||"Other"),note:r.type==="mf"?"MF":(r.title||"Scheduled payment"),accountId:r.accountId||null,account:(state.accounts||[]).find(a=>String(a.id)===String(r.accountId))?.name||"",source:"Scheduled reminder",reminderId:r.id,reminderOccurrenceDate:dueDate,autoBooked:true};
+          state.transactions.unshift(tx);r.paidOccurrences.push({dueDate,scheduledDate:dueDate,paidAt:current.toISOString(),amount:Number(r.amount),transactionId:tx.id,occurrenceKey,autoBooked:true,source:"Scheduled reminder"});created.push(tx);
+        }
+        const [yy,mm]=month.split("-").map(Number),next=new Date(yy,mm,1,12);month=`${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,"0")}`;
+      }
+    }
+    return {created:created.length,transactions:created};
+  }
+  function autoLinkBluecoinsMfPayments(state){if(!state||!Array.isArray(state.reminders)||!Array.isArray(state.transactions))return 0;let linked=0;for(const r of state.reminders){if(r?.type!=="mf"||r.active===false||!Number.isFinite(Number(r.amount))||Number(r.amount)<=0)continue;r.paidOccurrences=Array.isArray(r.paidOccurrences)?r.paidOccurrences:[];const start=normDate(r.dueDate);if(!/^\d{4}-\d{2}-\d{2}$/.test(start))continue;const dueDay=Number(start.slice(8,10));for(const tx of state.transactions){if(tx?.source!=="Bluecoins"||tx.isReminder||tx.kind!=="Expense"||Number(tx.deletedFlag)===5)continue;if(String(tx.accountId)!==String(r.accountId)||Math.abs(Math.abs(toNum(tx.amount))-Number(r.amount))>0.01)continue;const category=String(tx.category||tx.sourceCategory||"").trim().toLowerCase(),note=String(tx.note||tx.description||"").trim().toLowerCase();if(category!=="investment (buy)"||note!=="mf")continue;const date=normDate(tx.date);if(!/^\d{4}-\d{2}-\d{2}$/.test(date))continue;const month=date.slice(0,7);if(month<start.slice(0,7))continue;const scheduled=nextSbiWorkingDay(monthDayISO(month,dueDay),state.bankHolidayDates||[]);const delta=Math.abs((Date.parse(date+"T00:00:00Z")-Date.parse(scheduled+"T00:00:00Z"))/86400000);if(delta>5)continue;if(r.paidOccurrences.some(p=>p&&(p.transactionId===tx.id||String(p.dueDate||'').slice(0,7)===month)))continue;r.paidOccurrences.push({dueDate:scheduled,paidAt:new Date().toISOString(),amount:Number(tx.amount),transactionId:tx.id,source:"Bluecoins auto-match",manual:false});linked++;}}return linked;}
   const dayDiff=(a,b)=>Math.abs((Date.parse(normDate(a)+"T00:00:00Z")-Date.parse(normDate(b)+"T00:00:00Z"))/86400000);
   function transferText(t){return [t.category,t.note,t.notes,t.description,t.payee,t.counterAccount].filter(Boolean).join(" ").toLowerCase();}
   function findHistoricalTransferCandidates(transactions,options={}){
@@ -247,7 +294,7 @@
       const first=rows[0],raw=toNum(first.amount),amount=Math.abs(raw)/10000;
       const frequency=Number(first.source?.reminderFrequency??first.reminderMeta?.frequency);
       const recurrence=frequency===1?"daily":frequency===2?"weekly":frequency===3?"weekly":frequency===4?"monthly":frequency===5?"quarterly":frequency===6?"yearly":"monthly";
-      state.reminders.push({id:makeId(),source:"Bluecoins reminder",sourceKey:`bluecoins-reminder:${key}`,sourceGroupId:key,title:first.description||first.note||first.category||"Bluecoins reminder",type:String(first.category||"").toLowerCase()==="investment (buy)"?"mf":"bill",amount, dueDate:normDate(first.date),recurrence,category:first.category||"Other",accountId:accountMap?.get(String(first.accountId))?.id??first.accountId??null,leadDays:0,active:true,paidOccurrences:[],sourceOccurrenceCount:rows.length});added++;
+      state.reminders.push({id:makeId(),source:"Bluecoins reminder",sourceKey:`bluecoins-reminder:${key}`,sourceGroupId:key,title:first.description||first.note||first.category||"Bluecoins reminder",type:String(first.category||"").toLowerCase()==="investment (buy)"?"mf":"bill",amount, dueDate:normDate(first.date),recurrence,category:first.category||"Other",accountId:accountMap?.get(String(first.accountId))?.id??first.accountId??null,leadDays:0,active:true,paidOccurrences:[],sourceOccurrenceCount:rows.length,dueTime:"09:00",businessDayRule:String(first.category||"").toLowerCase()==="investment (buy)"?"next-bank-working-day":null});added++;
     }
     return added;
   }
@@ -265,7 +312,7 @@
       const first=rows[0],meta=first.reminderMeta||{},raw=first.sourceAmountRaw;
       const amount=Number.isFinite(Number(first.amount))?Math.abs(Number(first.amount)):Math.abs(toNum(raw))/10000;
       const f=Number(meta.frequency),recurrence=f===2||f===3?"weekly":f===5?"quarterly":f===6?"yearly":"monthly";
-      state.reminders.push({id:makeId(),source:"Bluecoins reminder",sourceKey:`bluecoins-reminder:${key}`,sourceGroupId:key,title:first.note||first.description||first.category||"Bluecoins reminder",type:String(first.category||first.sourceCategory||"").toLowerCase()==="investment (buy)"?"mf":"bill",amount,dueDate:normDate(first.date),recurrence,category:first.category||first.sourceCategory||"Other",accountId:first.accountId??null,leadDays:0,active:true,paidOccurrences:[],sourceOccurrenceCount:rows.length});added++;
+      state.reminders.push({id:makeId(),source:"Bluecoins reminder",sourceKey:`bluecoins-reminder:${key}`,sourceGroupId:key,title:first.note||first.description||first.category||"Bluecoins reminder",type:String(first.category||first.sourceCategory||"").toLowerCase()==="investment (buy)"?"mf":"bill",amount,dueDate:normDate(first.date),recurrence,category:first.category||first.sourceCategory||"Other",accountId:first.accountId??null,leadDays:0,active:true,paidOccurrences:[],sourceOccurrenceCount:rows.length,dueTime:"09:00",businessDayRule:String(first.category||"").toLowerCase()==="investment (buy)"?"next-bank-working-day":null});added++;
     }
     return added;
   }
@@ -332,9 +379,10 @@
       const tx={id:makeId(),source:"Bluecoins",sourceId:sourceId??null,sourceAmountRaw,amountScaleCorrected:true,sourceAmountDivisor:10000,date:normalizeBluecoinsDate(src.date),amount,kind,category:kind==="Transfer"?"Self transfer":(src.category||"Imported"),note:[src.description,src.notes].filter(Boolean).join(" · "),accountId:from?.id||null,account:from?.name||src.account||"",counterAccountId:kind==="Transfer"?(to?.id||null):null,counterAccount:kind==="Transfer"?(to?.name||src.counterAccount||""):"",transferGroupId:src.transferGroupId||null,isReminder:!!src.isReminder,deletedFlag:src.deletedFlag,labels:Array.isArray(src.labels)?src.labels:[],sourceCategory:src.category||"",sourceParentCategory:src.parentCategory||"",sourceTransferGroupId:src.transferGroupId||null,sourceTypeId:src.source?.transactionTypeID??null,sourceStatus:src.source?.status??null,sourceAccountReference:src.source?.accountReference??null,sourceTransactionCurrency:src.currency||src.source?.transactionCurrency||"INR",sourceConversionRate:src.source?.conversionRateNew??1,reminderMeta:src.isReminder?{groupId:src.source?.reminderGroupID??null,frequency:src.source?.reminderFrequency??null,repeatEvery:src.source?.reminderRepeatEvery??null,endingType:src.source?.reminderEndingType??null,startDate:src.source?.reminderStartDate??null,endDate:src.source?.reminderEndDate??null}:null};
       state.transactions.push(tx);if(sourceId!==undefined)known.add(String(sourceId));transactionsAdded++;
     }
+    const mfPaymentsAutoLinked=autoLinkBluecoinsMfPayments(state);
     state.bluecoinsCategoryTree=payload.categories||state.bluecoinsCategoryTree||null;state.bluecoinsReferenceData=payload.referenceData||state.bluecoinsReferenceData||null;
-    state.bluecoinsMeta={...(state.bluecoinsMeta||{}),source:payload.source||"Bluecoins",importedAt:new Date().toISOString(),lastImport:{accountsAdded,transactionsAdded,openingBalancesImported,duplicates,sourceCount:payload.transactions.length}};
-    return {accountsAdded,transactionsAdded,openingBalancesImported,duplicates,reminderSchedulesAdded,sourceCount:payload.transactions.length};
+    state.bluecoinsMeta={...(state.bluecoinsMeta||{}),source:payload.source||"Bluecoins",importedAt:new Date().toISOString(),lastImport:{accountsAdded,transactionsAdded,openingBalancesImported,duplicates,mfPaymentsAutoLinked,sourceCount:payload.transactions.length}};
+    return {accountsAdded,transactionsAdded,openingBalancesImported,duplicates,reminderSchedulesAdded,mfPaymentsAutoLinked,sourceCount:payload.transactions.length};
   }
   function upsertEcasImport(state,parsed,makeId){
     state.investments=Array.isArray(state.investments)?state.investments:[];state.investmentTransactions=Array.isArray(state.investmentTransactions)?state.investmentTransactions:[];state.investmentSnapshots=Array.isArray(state.investmentSnapshots)?state.investmentSnapshots:[];
@@ -347,5 +395,5 @@
     state.ecasMeta={casId:parsed.casId,date:parsed.date,summary:parsed.summary,checks:parsed.checks,importedAt:new Date().toISOString()};
     return {added,updated,transactions:parsed.investmentTransactions.length,snapshots:parsed.historical.length};
   }
-  return {findHistoricalTransferCandidates,reconcileTransferPair,undoTransferReconciliation,accountBalance,normalizeBluecoinsDate,applyInvestmentTransaction,parseEcasText,upsertEcasImport,upsertBluecoinsImport,upsertBluecoinsReminderSchedules,restoreReminderSchedulesFromTransactions,removeImportedBluecoinsMfReminders,migrateBluecoinsOpeningBalances,normalizeBluecoinsAmounts,applyLegacyBluecoinsStartupMigrations,parseCasDate};
+  return {findHistoricalTransferCandidates,reconcileTransferPair,undoTransferReconciliation,accountBalance,nextSbiWorkingDay,isSbiWorkingDay,autoBookDueReminderExpenses,autoLinkBluecoinsMfPayments,normalizeBluecoinsDate,applyInvestmentTransaction,parseEcasText,upsertEcasImport,upsertBluecoinsImport,upsertBluecoinsReminderSchedules,restoreReminderSchedulesFromTransactions,removeImportedBluecoinsMfReminders,migrateBluecoinsOpeningBalances,normalizeBluecoinsAmounts,applyLegacyBluecoinsStartupMigrations,parseCasDate};
 });
