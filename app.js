@@ -19,7 +19,9 @@ let activityFilters={account:"",type:"All",category:"",sort:"newest",from:"",to:
 try{const raw=localStorage.getItem(STORE_KEY);if(raw){const parsed=JSON.parse(raw);const hasRecords=["transactions","accounts","assets","liabilities","budgets"].some(k=>Array.isArray(parsed[k])&&parsed[k].length);if(hasRecords&&!localStorage.getItem("mywealth-preupdate-backup-v1"))localStorage.setItem("mywealth-preupdate-backup-v1",raw);}}catch(e){console.warn("My Wealth safety snapshot skipped",e);}
 
 function emptyState(){return {transactions:[],assets:[],liabilities:[],budgets:[],accounts:[],categories:[],investments:[],investmentTransactions:[],investmentSnapshots:[],netWorthSnapshots:[],reminders:[],bluecoinsMeta:null};}
-function loadState(){try{return {...emptyState(),...JSON.parse(localStorage.getItem(STORE_KEY)||"{}")};}catch{return emptyState();}}
+function normalizeState(raw){const merged={...emptyState(),...(raw&&typeof raw==="object"?raw:{})};for(const key of ["transactions","accounts","assets","liabilities","budgets","categories","investments","investmentTransactions","investmentSnapshots","netWorthSnapshots","reminders"])if(!Array.isArray(merged[key]))merged[key]=[];return merged;}
+function loadState(){try{return normalizeState(JSON.parse(localStorage.getItem(STORE_KEY)||"{}"));}catch{return emptyState();}}
+
 // IndexedDB is the primary store. localStorage is retained only as a small legacy
 // migration source; the multi-megabyte Bluecoins history is never written there.
 const DB_NAME="mywealth-db", DB_VERSION=1, DB_STORE="finance";
@@ -31,12 +33,9 @@ async function initStorage(){
  if(!("indexedDB" in window))throw Error("This browser does not support IndexedDB. Open My Wealth in Safari.");
  financeDB=await openFinanceDB();
  const saved=await dbGet("app-state");
- if(saved&&Array.isArray(saved.transactions)){state={...emptyState(),...saved};}
- else { // One-time migration from the previous localStorage version.
-   const legacy=loadState();
-   await dbPut("app-state",legacy);
-   state=legacy;
- }
+ const legacy=loadState();
+ if(saved&&Array.isArray(saved.transactions)){state=normalizeState(saved);}
+ else{await dbPut("app-state",legacy);state=legacy;}
  // Legacy Bluecoins repairs are isolated from native My Wealth JSON restores.
  // A restored native backup must survive restart byte-for-byte at the data level:
  // do not re-migrate opening balances or remove its recurring reminders.
@@ -86,11 +85,15 @@ function nav(page){
  if(!isActivity&&$("topSearchInput")){$("topSearchInput").hidden=true;if($("transactionSearch"))$("transactionSearch").value="";}
  if(!isReports&&$("reportFilterDialog")?.open)$("reportFilterDialog").close();
  if(isReports&&$("reportCategoryDetailView")){$("reportCategoryDetailView").hidden=true;$("reportMainView").hidden=false;}
- if(isSettings){showSettingsMain();updateCloudStatus();}if(isReminders&&$("reminderMonth"))renderReminders();
- if(isSetBudget){if($("budgetEditMonth"))$("budgetEditMonth").value=$("budgetMonth").value||monthKey();renderBudgetEditor();}
+ // Activate the requested page before rendering page-specific content. A malformed
+ // reminder must never leave the previous page visible under the new header.
  document.querySelectorAll(".page").forEach(p=>{p.classList.toggle("active",p.id===page);p.scrollTop=0;});
  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===page||((isBudget||isSetBudget)&&b.dataset.tab==="budgets")));
- document.querySelector("main")?.scrollTo(0,0);window.scrollTo(0,0);render();
+ document.querySelector("main")?.scrollTo(0,0);window.scrollTo(0,0);
+ if(isSettings){showSettingsMain();updateCloudStatus();}
+ if(isSetBudget){if($("budgetEditMonth"))$("budgetEditMonth").value=$("budgetMonth").value||monthKey();renderBudgetEditor();}
+ try{if(isReminders&&$("reminderMonth"))renderReminders();}catch(err){console.error("Reminders page render failed",err);toast("Reminders could not be displayed. Your saved data has not been changed.");}
+ try{render();}catch(err){console.error("My Wealth page render failed",err);toast("Some sections could not be displayed. Your saved data has not been changed.");}
 }
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.tab)));
 const topSettingsButton=$("topSettingsBtn");if(topSettingsButton)topSettingsButton.addEventListener("click",()=>nav("settings"));
@@ -137,13 +140,21 @@ if($("reportFilterForm"))$("reportFilterForm").onsubmit=e=>{e.preventDefault();$
 function accountMatches(ref,a){return String(ref??"")===String(a.id)||String(ref??"")===String(a.sourceId??"__none__");}
 function accountBalance(a){return MyWealthCore.accountBalance(a,state.transactions);}
 function refreshAccountSelect(){const active=(state.accounts||[]).filter(a=>!a.closed);for(const idn of ["entryAccount","entryToAccount"]){const el=$(idn);if(!el)continue;const old=el.value;el.innerHTML=(idn==="entryAccount"?'<option value="">No account</option>':'<option value="">Choose destination</option>')+active.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join("");if(active.some(a=>a.id===old))el.value=old;}}
+function renderAccounts(){
+ const acc=Array.isArray(state.accounts)?state.accounts:[],al=$("accountList");if(!al)return;
+ al.className="list-card"+(acc.length?"":" empty");
+ al.innerHTML=acc.length?acc.map(a=>`<div class="list-row account-row" data-account-open="${esc(a.id)}"><div class="row-icon">${a.type==="Wallet"?"◉":"▣"}</div><div class="row-main"><strong>${esc(a.name)} ${a.closed?"(Closed)":""}</strong><small>${esc(a.type)} · ${a.closed?"Historical records retained":"Tap to view transactions"}</small></div><div class="row-amount">${money(accountBalance(a))}</div><button class="text-btn" data-account-toggle="${esc(a.id)}">${a.closed?"Reopen":"Close"}</button></div>`).join(""):empty("No accounts yet. Import Bluecoins or add an account.");
+ al.querySelectorAll("[data-account-toggle]").forEach(b=>b.onclick=async e=>{e.stopPropagation();const a=state.accounts.find(x=>String(x.id)===b.dataset.accountToggle);if(!a)return;a.closed=!a.closed;a.closedAt=a.closed?new Date().toISOString():null;if(!(await persist()))return;toast(a.closed?"Account closed. History retained.":"Account reopened");});
+ al.querySelectorAll("[data-account-open]").forEach(r=>r.onclick=e=>{if(e.target.closest("button"))return;accountActivityFilter=r.dataset.accountOpen;activityFilters.account="";nav("transactions");});
+}
 function render(){
  refreshAccountSelect();
  const investmentAssets=sum(state.investments||[],h=>Number(h.value)||0),assets=sum(state.assets,x=>x.value)+sum((state.accounts||[]).filter(a=>!a.closed),a=>accountBalance(a))+investmentAssets,debts=sum(state.liabilities,x=>x.value),month=$("dashMonth").value||monthKey(),mTx=state.transactions.filter(x=>!x.isTransferReconciled&&inMonth(x.date,month)),inc=sum(mTx.filter(x=>x.kind==="Income"),x=>x.amount),exp=sum(mTx.filter(x=>x.kind==="Expense"),x=>x.amount);
  $("netWorth").textContent=money(assets-debts);$("assetTotal").textContent=money(assets);$("debtTotal").textContent=money(debts);$("monthIncome").textContent=money(inc);$("monthExpense").textContent=money(exp);$("monthSavings").textContent=money(inc-exp);$("monthSavings").style.color=inc>=exp?"#208357":"#a44c43";$("wealthNet").textContent=money(assets-debts);
- renderInvestments();
-
- renderHomeReminders();
+ renderAccounts();
+ // Render core finance data first. Investment widgets are isolated below so a
+ // missing optional investment element cannot blank Activity or Accounts.
+ try{renderHomeReminders();}catch(err){console.error("Home reminders render failed",err);}
  $("recentList").className="list-card"+(state.transactions.length?"":" empty");$("recentList").innerHTML=state.transactions.length?state.transactions.filter(t=>!t.isReminder&&!t.isTransferReconciled).slice(0,3).map(txRow).join(""):empty("No activity yet. Add your first transaction.");
  const q=($("transactionSearch").value||"").toLowerCase(),f=activityFilters;
  let filtered=state.transactions.filter(t=>!t.isReminder&&!t.isTransferReconciled&&(f.type==="All"||t.kind===f.type)&&(!f.account&&!accountActivityFilter||String(t.accountId)===String(f.account||accountActivityFilter))&&(!f.category||t.category===f.category)&&(!f.from||String(t.date)>=f.from)&&(!f.to||String(t.date)<=f.to)&&(`${t.category} ${t.note} ${t.account||""}`.toLowerCase().includes(q)));
@@ -157,8 +168,10 @@ function render(){
  document.querySelectorAll("[data-select-tx]").forEach(c=>c.onchange=()=>{const k=String(c.dataset.selectTx);c.checked?selectedTransactionIds.add(k):selectedTransactionIds.delete(k);updateBulkToolbar();});updateBulkToolbar();
  $("assetList").className="list-card"+(state.assets.length?"":" empty");$("assetList").innerHTML=state.assets.length?state.assets.map(a=>`<div class="list-row"><div class="row-icon">◈</div><div class="row-main"><strong>${esc(a.name)}</strong><small>${esc(a.assetClass)}</small></div><div class="row-amount">${money(a.value)}</div><button class="icon-btn" style="color:#a44" data-delete="asset" data-id="${a.id}">×</button></div>`).join(""):empty("No assets added yet.");
  $("debtList").className="list-card"+(state.liabilities.length?"":" empty");$("debtList").innerHTML=state.liabilities.length?state.liabilities.map(d=>`<div class="list-row"><div class="row-icon">↘</div><div class="row-main"><strong>${esc(d.name)}</strong><small>Outstanding balance</small></div><div class="row-amount negative">${money(d.value)}</div><button class="icon-btn" style="color:#a44" data-delete="debt" data-id="${d.id}">×</button></div>`).join(""):empty("No liabilities added yet.");
- const acc=state.accounts||[];const al=$("accountList");al.className="list-card"+(acc.length?"":" empty");al.innerHTML=acc.length?acc.map(a=>`<div class="list-row account-row" data-account-open="${a.id}"><div class="row-icon">${a.type==="Wallet"?"◉":"▣"}</div><div class="row-main"><strong>${esc(a.name)} ${a.closed?"(Closed)":""}</strong><small>${esc(a.type)} · ${a.closed?"Historical records retained":"Tap to view transactions"}</small></div><div class="row-amount">${money(accountBalance(a))}</div><button class="text-btn" data-account-toggle="${a.id}">${a.closed?"Reopen":"Close"}</button></div>`).join(""):empty("No accounts yet. Import Bluecoins or add an account.");document.querySelectorAll("[data-account-toggle]").forEach(b=>b.onclick=async e=>{e.stopPropagation();const a=state.accounts.find(x=>x.id===b.dataset.accountToggle);if(!a)return;a.closed=!a.closed;a.closedAt=a.closed?new Date().toISOString():null;if(!(await persist()))return;toast(a.closed?"Account closed. History retained.":"Account reopened");});document.querySelectorAll("[data-account-open]").forEach(r=>r.onclick=e=>{if(e.target.closest("button"))return;accountActivityFilter=r.dataset.accountOpen;activityFilters.account="";nav("transactions");});
- renderBudgets();renderReports();bindDeletes();
+ try{renderInvestments();}catch(err){console.error("Investment widgets render failed",err);}
+ try{renderBudgets();}catch(err){console.error("Budgets render failed",err);}
+ try{renderReports();}catch(err){console.error("Reports render failed",err);}
+ bindDeletes();
 }
 function calculatePortfolioXirr(rows){
  const flows=[];
