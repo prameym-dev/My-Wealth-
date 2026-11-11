@@ -483,3 +483,12 @@ html[data-theme="dark"] .report-section-tabs button.selected{background:var(--ac
 html[data-theme="dark"] .wealth-performance-card,html[data-theme="dark"] .wealth-allocation-card,html[data-theme="dark"] #wealth .investment-tile,html[data-theme="dark"] .wealth-heading .icon-btn{background:#18231e;border-color:var(--line)}
 html[data-theme="dark"] .wealth-hero{background:linear-gradient(140deg,#102b24,#174a39)}
 @media(max-width:390px){.wealth-hero{padding:18px 16px}.wealth-performance-card,.wealth-allocation-card{padding:13px}.wealth-performance-grid strong{font-size:14px}.wealth-allocation-legend{gap:9px 7px}}
+/* Wealth header now keeps only the eyebrow; settings stays in the global top navigation. */
+.wealth-heading{display:block;margin:0 0 15px}
+.wealth-heading .icon-btn,.wealth-heading svg{display:none}
+/* Transaction amount and post-transaction account balance stack. */
+.transaction-row .tx-amount-stack{order:3;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:3px;min-width:82px;margin-left:auto;white-space:nowrap}
+.transaction-row .tx-amount-stack .row-amount{order:0}
+.tx-account-balance{display:block;color:var(--muted,#71817b);font-size:9px;font-weight:650;line-height:1.2}
+.wealth-heading .icon-btn,.wealth-heading svg{display:none!important}
+.wealth-heading{display:block;margin:0 0 12px}

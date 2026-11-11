@@ -21,3 +21,12 @@ The package has not been exercised on the user's iPhone or against the deployed 
 - `node --check app.js` — passed after the Wealth page update.
 - `npm test` — 16 passed, 0 failed after the Wealth page update.
 - Wealth-specific browser interaction and iPhone visual QA have not yet been run.
+
+## Wealth / import / Activity update (2026-11-11)
+- `node --check app.js` passed.
+- `node --check finance-core.js` passed.
+- `npm test`: 17 tests passed, 0 failed.
+- Added downloadable CSV templates to the Wealth holdings import and transaction import screens.
+- Transaction CSV/Excel import accepts amount-sign and separate debit/credit layouts, and attempts to match account names to existing Accounts.
+- Activity transaction rows now show the associated account's calculated balance beneath the transaction amount when an account is linked.
+- PDF.js text-line grouping tolerance was adjusted; the uploaded CDSL CAS text reconciles in the core parser (20 MF holdings, 79 demat holdings, exact statement totals). Browser PDF.js extraction on iOS still requires device verification.

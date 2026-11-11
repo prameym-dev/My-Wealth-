@@ -23,3 +23,12 @@
 - Existing IndexedDB database and record structure are retained; new holding subtype is an optional field on investment records.
 - Manual/live price feed integration and detailed FD/SGB terms (rates, maturity, coupon and redemption schedules) remain follow-on work.
 - Browser/device QA on iPhone remains required.
+
+## Latest update — Wealth imports and Activity balances
+- Wealth tab includes CSV/Excel holdings import and a downloadable holdings template.
+- Settings > Import data includes CSV/Excel transaction import and a downloadable transaction template.
+- Both imports retain preview-and-confirm workflow; duplicate detection remains enabled.
+- Transaction import supports common debit/credit columns and account-name matching where the account already exists.
+- Activity transaction rows show the account balance after the transaction beneath the amount when an account is linked.
+- Wealth page keeps the `YOUR FINANCIAL OVERVIEW` eyebrow; the page-level settings control is suppressed so Settings remains in the top navigation.
+- Validation: 17 automated tests passed. iPhone visual and PDF.js browser extraction checks remain pending.
