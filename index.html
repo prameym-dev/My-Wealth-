@@ -39,8 +39,10 @@
       </section>
 
       <section id="reminders" class="page">
-        <div class="page-heading"><div><p class="eyebrow">PLAN AHEAD</p><h1>Reminders &amp; Bills</h1></div><button class="primary-btn small" id="addReminderBtn" type="button">＋ Add reminder</button></div>
-        <div class="reminder-month-controls"><button type="button" id="reminderPrevMonth" aria-label="Previous month">‹</button><input id="reminderMonth" type="month" aria-label="Reminder month"><button type="button" id="reminderNextMonth" aria-label="Next month">›</button></div>
+        <div class="reminder-topbar">
+          <div class="reminder-month-controls"><button type="button" id="reminderPrevMonth" aria-label="Previous month">‹</button><input id="reminderMonth" type="month" aria-label="Reminder month"><button type="button" id="reminderNextMonth" aria-label="Next month">›</button></div>
+          <button class="primary-btn small" id="addReminderBtn" type="button">＋ Add reminder</button>
+        </div>
         <article class="reminder-summary"><div><small>Total scheduled</small><strong id="reminderTotal">₹0.00</strong></div><div><small>Pending</small><strong id="reminderPendingCount">0</strong></div><div><small>Paid</small><strong id="reminderPaidCount">0</strong></div></article>
         <div class="button-row reminder-toolbar"><button class="secondary-btn" id="enableReminderNotifications" type="button">Enable notifications</button><button class="secondary-btn" id="testReminderNotification" type="button">Test notification</button></div>
         <p class="hint" id="reminderNotificationStatus">Notifications can be shown when My Wealth is open. Background push requires a configured push service.</p>
@@ -131,7 +133,7 @@
             <button class="setting-link" id="settingsAccountsBtn" type="button"><span><i class="setting-icon">▤</i>Accounts</span><b>›</b></button>
             <button class="setting-link" id="settingsAboutBtn" type="button"><span><i class="setting-icon">ⓘ</i>About</span><b>›</b></button>
           </section>
-          <div class="version" id="appBuildNumber">MY WEALTH · BUILD 2026.11.11.10</div>
+          <div class="version" id="appBuildNumber">MY WEALTH · BUILD 2026.11.11.12</div>
         </div>
         <div id="cloudSettingsPage" class="settings-subpage" hidden>
           <section class="settings-group"><h2>Cloud backup &amp; restore</h2><p class="hint">Configure your private cloud connection, sign in, and synchronise or restore your data.</p><div id="cloudStatus" class="status-line">Not configured · Local-only mode</div><button class="setting-link" id="configureCloudBtn" type="button"><span>Configure cloud connection</span><b>›</b></button><button class="setting-link" id="loginBtn" type="button"><span>Sign in / create account</span><b>›</b></button><button class="primary-btn settings-action-wide" id="syncNowBtn" type="button">Sync now</button><label class="secondary-btn file-button settings-action-wide">Restore JSON backup<input type="file" id="restoreJsonInput" accept="application/json"></label></section>

@@ -511,3 +511,11 @@ body.reminders-page-mode .topbar .top-context-title[hidden]{display:none!importa
 .home-flow-grid small{font-size:10px!important;line-height:1.1}
 .home-flow-grid strong{font-size:12px!important;line-height:1.2;white-space:nowrap}
 @media(max-width:390px){.home-month-card{padding:9px 10px!important}.home-month-card .section-heading input{width:126px!important;max-width:126px!important;font-size:13px!important}.home-flow-grid strong{font-size:11px!important}}
+
+/* Build 12: compact reminder month navigation beside the create action. */
+.reminder-topbar{display:flex;align-items:center;gap:9px;width:100%;margin:0 0 16px;min-width:0}
+.reminder-topbar .reminder-month-controls{display:grid;grid-template-columns:34px minmax(0,1fr) 34px;gap:5px;align-items:center;flex:1;min-width:0;margin:0}
+.reminder-month-controls button{height:46px;min-height:46px;padding:0;border-radius:12px;font-size:22px;line-height:1}
+.reminder-month-controls input[type=month]{height:46px;min-height:46px;width:100%;min-width:0;padding:0 7px;border:1px solid var(--line);border-radius:12px;background:var(--white);color:var(--text);font:600 13px Manrope;text-align:center}
+.reminder-topbar #addReminderBtn{height:46px;min-height:46px;flex:0 0 auto;width:148px;padding:0 10px;white-space:nowrap;font-size:13px;border-radius:12px}
+@media(max-width:390px){.reminder-topbar{gap:7px}.reminder-topbar .reminder-month-controls{grid-template-columns:30px minmax(0,1fr) 30px;gap:3px}.reminder-month-controls button{height:44px;min-height:44px}.reminder-month-controls input[type=month]{height:44px;min-height:44px;font-size:12px;padding:0 3px}.reminder-topbar #addReminderBtn{width:137px;height:44px;min-height:44px;font-size:12px;padding:0 7px}}
