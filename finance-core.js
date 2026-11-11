@@ -192,6 +192,21 @@
     const type=String(account.type||"").toLowerCase(),name=String(account.name||"").toLowerCase();
     return /credit|liabilit|loan|payable|mortgage/.test(type) || /\b(cc|zip|paylater|postpaid)\b/.test(name);
   }
+  // Bluecoins stores monetary values in millionths of the account currency.
+  // Re-derive from preserved raw values so older backups made with the wrong
+  // divisor are repaired on restore; safe to run repeatedly.
+  function normalizeBluecoinsAmounts(state){
+    if(!state||!Array.isArray(state.transactions))return {corrected:0};
+    let corrected=0;
+    for(const t of state.transactions){
+      if(t.source!=="Bluecoins"||t.sourceAmountRaw===undefined||t.sourceAmountRaw===null)continue;
+      const amount=Math.abs(toNum(t.sourceAmountRaw))/1000000;
+      if(!Number.isFinite(amount))continue;
+      if(Number(t.amount)!==amount||t.amountScaleCorrected!==true){t.amount=amount;t.amountScaleCorrected=true;corrected++;}
+    }
+    if(corrected)state.bluecoinsMeta={...(state.bluecoinsMeta||{}),amountScaleCorrectedAt:new Date().toISOString()};
+    return {corrected};
+  }
   function migrateBluecoinsOpeningBalances(state){
     if(!state||!Array.isArray(state.transactions))return {migrated:0,amount:0};
     state.accounts=Array.isArray(state.accounts)?state.accounts:[];
@@ -201,12 +216,13 @@
       if(!isBluecoinsOpeningBalanceTransaction(t)){keep.push(t);continue;}
       const account=state.accounts.find(a=>String(a.id)===String(t.accountId)) || state.accounts.find(a=>String(a.name||"").trim().toLowerCase()===String(t.account||"").trim().toLowerCase());
       if(!account){keep.push(t);continue;}
+      const amount=Math.abs(toNum(t.amount));
       const raw=t.sourceAmountRaw!==undefined?toNum(t.sourceAmountRaw):0;
-      const amount=raw!==0?Math.abs(raw)/10000:Math.abs(toNum(t.amount));
       const signed=raw!==0?Math.sign(raw)*amount:amount;
       account.openingBalance=toNum(account.openingBalance)+signed;
       account.bluecoinsOpeningBalanceSourceIds=Array.isArray(account.bluecoinsOpeningBalanceSourceIds)?account.bluecoinsOpeningBalanceSourceIds:[];
       if(t.sourceId!==undefined&&t.sourceId!==null)account.bluecoinsOpeningBalanceSourceIds.push(String(t.sourceId));
+      account.bluecoinsOpeningBalanceScale=1000000;
       migrated++;total+=amount;
     }
     state.transactions=keep;
@@ -227,6 +243,20 @@
       if(!a){const typeMap={1:"Other",2:"Liability",3:"Bank",4:"Wallet",5:"Investment",6:"Other",7:"Other",8:"Credit card",9:"Loan",10:"Payable",11:"Mortgage",12:"Other",13:"Liability",15:"Other",16:"Other"};a={id:makeId(),sourceId,name:src.accountName||"Imported account",type:typeMap[src.accountTypeID]||"Other",sourceAccountTypeId:Number(src.accountTypeID)||null,openingBalance:0,closed:false,source:"Bluecoins"};state.accounts.push(a);accountsAdded++;}else{a.sourceId=sourceId;a.sourceAccountTypeId=Number(src.accountTypeID)||a.sourceAccountTypeId||null;if(!a.name)a.name=src.accountName||"Imported account";}
       accountMap.set(String(sourceId),a);
     }
+    // Repair opening balances imported by Build 06 (which divided raw values
+    // by 10,000). Use the source IDs already attached to each account so this
+    // is limited to known imported opening rows and preserves manual adjustments.
+    const openingBySourceId=new Map();
+    for(const src of payload.transactions){
+      const sourceId=src.sourceId??src.source?.transactionsTableID;
+      const isOpening=String(src.type||"").trim().toLowerCase()==="new account"||Number(src.transactionTypeID??src.source?.transactionTypeID)===2||String(src.category||"").trim().toLowerCase()==="(new account)";
+      if(isOpening&&sourceId!==undefined)openingBySourceId.set(String(sourceId),toNum(src.amount));
+    }
+    for(const account of state.accounts){
+      const ids=Array.isArray(account.bluecoinsOpeningBalanceSourceIds)?account.bluecoinsOpeningBalanceSourceIds:[];
+      const raws=ids.map(id=>openingBySourceId.get(String(id))).filter(v=>v!==undefined);
+      if(raws.length&&Number(account.bluecoinsOpeningBalanceScale)!==1000000){const oldContribution=raws.reduce((sum,raw)=>sum+Math.sign(raw)*Math.abs(raw)/10000,0);const correctContribution=raws.reduce((sum,raw)=>sum+Math.sign(raw)*Math.abs(raw)/1000000,0);account.openingBalance=toNum(account.openingBalance)-oldContribution+correctContribution;account.bluecoinsOpeningBalanceScale=1000000;}
+    }
     const known=new Set(state.transactions.filter(t=>t.source==="Bluecoins"&&t.sourceId!==undefined).map(t=>String(t.sourceId)));
     for(const a of state.accounts)for(const sourceId of (a.bluecoinsOpeningBalanceSourceIds||[]))known.add(String(sourceId));
     let transactionsAdded=0,openingBalancesImported=0,duplicates=0;
@@ -238,9 +268,9 @@
       if(sourceId!==undefined&&known.has(String(sourceId))){duplicates++;continue;}
       const from=accountMap.get(String(src.accountId));
       const isOpening=String(src.type||"").trim().toLowerCase()==="new account"||Number(src.transactionTypeID??src.source?.transactionTypeID)===2||String(src.category||"").trim().toLowerCase()==="(new account)";
-      if(isOpening&&from){const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/10000;from.openingBalance=toNum(from.openingBalance)+(sourceAmountRaw!==0?Math.sign(sourceAmountRaw)*amount:0);from.bluecoinsOpeningBalanceSourceIds=Array.isArray(from.bluecoinsOpeningBalanceSourceIds)?from.bluecoinsOpeningBalanceSourceIds:[];if(sourceId!==undefined)from.bluecoinsOpeningBalanceSourceIds.push(String(sourceId));if(sourceId!==undefined)known.add(String(sourceId));openingBalancesImported++;continue;}
+      if(isOpening&&from){const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/1000000;from.openingBalance=toNum(from.openingBalance)+(sourceAmountRaw!==0?Math.sign(sourceAmountRaw)*amount:0);from.bluecoinsOpeningBalanceSourceIds=Array.isArray(from.bluecoinsOpeningBalanceSourceIds)?from.bluecoinsOpeningBalanceSourceIds:[];if(sourceId!==undefined)from.bluecoinsOpeningBalanceSourceIds.push(String(sourceId));from.bluecoinsOpeningBalanceScale=1000000;if(sourceId!==undefined)known.add(String(sourceId));openingBalancesImported++;continue;}
       const kind=["Income","Expense","Transfer"].includes(src.type)?src.type:"Expense",to=accountMap.get(String(src.counterAccountId));
-      const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/10000;
+      const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/1000000;
       const tx={id:makeId(),source:"Bluecoins",sourceId:sourceId??null,sourceAmountRaw,amountScaleCorrected:true,date:normalizeBluecoinsDate(src.date),amount,kind,category:kind==="Transfer"?"Self transfer":(src.category||"Imported"),note:[src.description,src.notes].filter(Boolean).join(" · "),accountId:from?.id||null,account:from?.name||src.account||"",counterAccountId:kind==="Transfer"?(to?.id||null):null,counterAccount:kind==="Transfer"?(to?.name||src.counterAccount||""):"",transferGroupId:src.transferGroupId||null,isReminder:!!src.isReminder,deletedFlag:src.deletedFlag,labels:Array.isArray(src.labels)?src.labels:[],sourceCategory:src.category||"",sourceParentCategory:src.parentCategory||"",sourceTransferGroupId:src.transferGroupId||null,sourceTypeId:src.source?.transactionTypeID??null,sourceStatus:src.source?.status??null,sourceAccountReference:src.source?.accountReference??null,sourceTransactionCurrency:src.currency||src.source?.transactionCurrency||"INR",sourceConversionRate:src.source?.conversionRateNew??1,reminderMeta:src.isReminder?{frequency:src.source?.reminderFrequency??null,repeatEvery:src.source?.reminderRepeatEvery??null,endingType:src.source?.reminderEndingType??null,startDate:src.source?.reminderStartDate??null,endDate:src.source?.reminderEndDate??null}:null};
       state.transactions.push(tx);if(sourceId!==undefined)known.add(String(sourceId));transactionsAdded++;
     }
@@ -259,5 +289,5 @@
     state.ecasMeta={casId:parsed.casId,date:parsed.date,summary:parsed.summary,checks:parsed.checks,importedAt:new Date().toISOString()};
     return {added,updated,transactions:parsed.investmentTransactions.length,snapshots:parsed.historical.length};
   }
-  return {findHistoricalTransferCandidates,reconcileTransferPair,undoTransferReconciliation,accountBalance,normalizeBluecoinsDate,applyInvestmentTransaction,parseEcasText,upsertEcasImport,upsertBluecoinsImport,removeImportedBluecoinsMfReminders,migrateBluecoinsOpeningBalances,parseCasDate};
+  return {findHistoricalTransferCandidates,reconcileTransferPair,undoTransferReconciliation,accountBalance,normalizeBluecoinsDate,applyInvestmentTransaction,parseEcasText,upsertEcasImport,upsertBluecoinsImport,removeImportedBluecoinsMfReminders,migrateBluecoinsOpeningBalances,normalizeBluecoinsAmounts,parseCasDate};
 });
