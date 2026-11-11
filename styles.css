@@ -533,3 +533,187 @@ body.reminders-page-mode .topbar .top-context-title[hidden]{display:none!importa
 
 /* Build 16: clear auto-book preference row in reminder editor. */
 .dialog-form>label.check-row{display:flex;align-items:flex-start;gap:10px;line-height:1.45;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#f4f8f5;font-size:12px}.dialog-form>label.check-row input{flex:0 0 18px;width:18px;height:18px;margin:1px 0 0}
+
+
+/* Build 17: month navigation keeps the full month label visible; arrow sits at selector edge. */
+.reminder-topbar{display:flex;align-items:center;gap:8px;min-width:0}
+.reminder-topbar .reminder-month-controls{display:grid;grid-template-columns:30px minmax(0,1fr) 30px;gap:4px;flex:0 0 64%;width:64%;min-width:0}
+.reminder-topbar .reminder-month-controls button{width:30px;height:46px;min-height:46px;padding:0}
+.reminder-topbar .reminder-month-controls input[type=month]{width:100%;min-width:0;height:46px;min-height:46px;padding:0 3px;font-size:12px;text-align:center}
+.reminder-topbar #addReminderBtn{flex:1 1 0;width:auto;min-width:0;height:46px;min-height:46px;padding:0 5px;font-size:11px;white-space:nowrap}
+#reminderCategoryWrap[hidden],#reminderAccountWrap[hidden],#reminderCreditFields[hidden]{display:none!important}
+@media(max-width:390px){.reminder-topbar{gap:6px}.reminder-topbar .reminder-month-controls{flex-basis:64%;width:64%;grid-template-columns:28px minmax(0,1fr) 28px;gap:3px}.reminder-topbar .reminder-month-controls button{width:28px;height:44px;min-height:44px}.reminder-topbar .reminder-month-controls input[type=month]{height:44px;min-height:44px;font-size:11px;padding:0 1px}.reminder-topbar #addReminderBtn{height:44px;min-height:44px;font-size:10px;padding:0 3px}}
+
+
+/* Build 18: normalize native iOS date controls in reminder dialogs. */
+#reminderDialog input[type="date"],
+#reminderPaymentDialog input[type="date"]{
+  display:block!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+  margin-top:6px!important;
+  padding:8px 10px!important;
+  line-height:22px!important;
+  font-size:13px!important;
+  border-radius:11px!important;
+  -webkit-appearance:none!important;
+  appearance:none!important;
+  vertical-align:middle;
+}
+#reminderDialog input[type="date"]::-webkit-date-and-time-value,
+#reminderPaymentDialog input[type="date"]::-webkit-date-and-time-value{
+  min-height:22px;
+  line-height:22px;
+  text-align:left;
+  padding:0;
+}
+
+
+/* Build 19: align Activity month controls with Reminders and refine bulk selection. */
+.activity-month-row{
+  display:grid!important;
+  grid-template-columns:30px minmax(0,1fr) 30px 132px!important;
+  gap:5px!important;
+  align-items:center!important;
+  min-width:0!important;
+  min-height:46px!important;
+  padding:0!important;
+  background:var(--surface,#fff)!important;
+  color:var(--ink,#172b27)!important;
+  border:1px solid var(--line)!important;
+  border-radius:14px!important;
+  box-shadow:none!important;
+}
+.activity-month-row>button:not(.activity-add-btn){
+  width:30px!important;height:44px!important;min-height:44px!important;
+  display:grid!important;place-items:center!important;padding:0!important;
+  border:1px solid var(--line)!important;border-radius:12px!important;
+  background:var(--surface,#fff)!important;color:var(--green,#1b6b52)!important;
+  font-size:22px!important;line-height:1!important;
+}
+.activity-month-row>strong{
+  min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  white-space:nowrap!important;text-align:center!important;font-size:13px!important;
+  color:var(--ink,#172b27)!important;
+}
+.activity-month-row .activity-add-btn{
+  width:132px!important;min-width:0!important;height:44px!important;min-height:44px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  gap:5px!important;padding:0 6px!important;border:0!important;border-radius:12px!important;
+  background:var(--green,#1b6b52)!important;color:#fff!important;
+  font-size:12px!important;font-weight:800!important;white-space:nowrap!important;
+}
+.activity-month-row .activity-add-btn svg{width:16px!important;height:16px!important;flex:0 0 16px}
+@media(max-width:390px){
+  .activity-month-row{grid-template-columns:28px minmax(0,1fr) 28px 122px!important;gap:4px!important}
+  .activity-month-row>button:not(.activity-add-btn){width:28px!important;height:44px!important}
+  .activity-month-row .activity-add-btn{width:122px!important;height:44px!important;font-size:11px!important}
+  .activity-month-row>strong{font-size:12px!important}
+}
+
+/* The destination account is only relevant to transfers. Enforce the hidden state
+   against generic dialog label display rules, including on iOS Safari. */
+#entryToAccountWrap[hidden],#entryCategoryWrap[hidden]{display:none!important}
+
+/* Build 19: selection header shows count and amount; checkbox is the only select-all control. */
+.bulk-selection-head{background:#0e6046!important;color:#fff!important;min-height:40px!important;height:40px!important}
+.bulk-selection-head label{flex:1;min-width:0;gap:8px!important}
+.bulk-selection-head .selected-tx-total{margin-left:auto;font-size:11px;font-weight:800;white-space:nowrap;color:#e3f2e9}
+.bulk-selection-head .deselect-selected-btn{
+  flex:0 0 32px!important;width:32px!important;height:32px!important;
+  display:grid!important;place-items:center!important;margin:0 0 0 6px!important;
+  padding:0!important;border:0!important;background:transparent!important;
+  color:#ff7770!important;font-size:28px!important;line-height:1!important;font-weight:800!important;
+}
+.bulk-selection-head .select-all-text{display:none!important}
+.bulk-toolbar{background:#e4f1e9!important;border-color:#c9dfd2!important}
+.bulk-actions{background:#e4f1e9!important;padding:7px 5px!important}
+.bulk-actions button{background:transparent!important;color:#14563f!important}
+.bulk-actions button svg{background:transparent!important}
+.bulk-actions .danger-btn{color:#b5423f!important}
+
+
+/* Build 20: final compact bulk-selection toolbar overrides */
+#bulkToolbar{
+  bottom:calc(70px + env(safe-area-inset-bottom) + 2px)!important;
+  padding:0!important;
+  border-radius:13px!important;
+  background:#e4f1e9!important;
+  border:1px solid #c9dfd2!important;
+  overflow:hidden!important;
+  box-shadow:0 5px 16px #0c2e201f!important;
+}
+#bulkToolbar .bulk-selection-head{
+  display:flex!important;
+  min-height:34px!important;
+  height:34px!important;
+  padding:0 10px!important;
+  background:#0e6046!important;
+  color:#fff!important;
+}
+#bulkToolbar .bulk-selection-head label{
+  display:flex!important;
+  flex:1 1 auto!important;
+  min-width:0!important;
+  align-items:center!important;
+  gap:7px!important;
+  margin:0!important;
+}
+#bulkToolbar #selectedTxCount{white-space:nowrap!important}
+#bulkToolbar #selectedTxTotal{
+  display:inline-block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  margin-left:auto!important;
+  color:#e3f2e9!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  white-space:nowrap!important;
+}
+#bulkToolbar #deselectAllTx{
+  display:grid!important;
+  flex:0 0 38px!important;
+  width:38px!important;
+  min-width:38px!important;
+  height:34px!important;
+  margin:0 0 0 6px!important;
+  padding:0!important;
+  place-items:center!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#ff625c!important;
+  font-size:34px!important;
+  line-height:1!important;
+  font-weight:900!important;
+}
+#bulkToolbar .select-all-text,
+#bulkToolbar .select-all-label,
+#bulkToolbar .select-all-action{display:none!important}
+#bulkToolbar .bulk-actions{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:0!important;
+  width:100%!important;
+  min-height:40px!important;
+  padding:3px 4px!important;
+  margin:0!important;
+  background:#e4f1e9!important;
+}
+#bulkToolbar .bulk-actions button{
+  min-width:0!important;
+  min-height:38px!important;
+  padding:3px 2px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#14563f!important;
+  box-shadow:none!important;
+}
+#bulkToolbar .bulk-actions button svg{
+  background:transparent!important;
+}
+#bulkToolbar .bulk-actions .danger-btn{color:#b5423f!important}
