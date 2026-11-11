@@ -53,7 +53,27 @@
     for(const originalId of (t.reconciledFromIds||[])){const original=state.transactions.find(x=>String(x.id)===String(originalId));if(original){delete original.isTransferReconciled;delete original.reconciledToTransferId;}}
     state.transactions=state.transactions.filter(x=>String(x.id)!==String(transferId));return true;
   }
-  function accountBalance(account,transactions){let bal=Number(account.openingBalance)||0;for(const t of transactions||[]){if(t.isReminder||t.isTransferReconciled)continue;const amount=Math.abs(toNum(t.amount));if(t.kind==="Transfer"){if(String(t.accountId)===String(account.id))bal-=amount;if(String(t.counterAccountId)===String(account.id))bal+=amount;}else if(String(t.accountId)===String(account.id)){if(t.kind==="Income")bal+=amount;else if(t.kind==="Expense")bal-=amount;}}return bal;}
+  function accountBalance(account,transactions){
+    let bal=Number(account.openingBalance)||0;
+    for(const t of transactions||[]){
+      if(t.isReminder||t.isTransferReconciled||Number(t.deletedFlag)===5)continue;
+      if(String(t.accountId)!==String(account.id)){
+        // Bluecoins exports each side of a transfer as its own linked row.
+        // Its paired row applies the movement to the other account.
+        if(t.kind==="Transfer"&&t.source!=="Bluecoins"&&String(t.counterAccountId)===String(account.id))bal+=Math.abs(toNum(t.amount));
+        continue;
+      }
+      const amount=Math.abs(toNum(t.amount));
+      if(t.source==="Bluecoins"&&t.sourceAmountRaw!==undefined&&Number(t.sourceAmountRaw)!==0){
+        // Bluecoins' signed source amount is authoritative for every transaction
+        // type, including refunds/reversals whose sign can differ from the type.
+        bal+=Math.sign(Number(t.sourceAmountRaw))*amount;
+      }else if(t.kind==="Transfer")bal-=amount;
+      else if(t.kind==="Income")bal+=amount;
+      else if(t.kind==="Expense")bal-=amount;
+    }
+    return bal;
+  }
   function applyInvestmentTransaction(state,tx,direction=1){
     if(tx.source==="eCAS"||tx.appliedToHolding===false)return false;
     const h=(state.investments||[]).find(x=>String(x.id)===String(tx.holdingId));if(!h)return false;
@@ -151,6 +171,38 @@
   }
   function firstFrom(s,re){const m=String(s||"").match(re);return m?m[1]:null;}
   function parseCasDate(s){const m=String(s).match(/(\d{2})-([A-Za-z]{3}|\d{2})-(\d{4})/);if(!m)return new Date().toISOString().slice(0,10);const months={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};const mo=/^\d{2}$/.test(m[2])?Number(m[2]):months[m[2]];return `${m[3]}-${String(mo).padStart(2,"0")}-${m[1]}`;}
+  function isBluecoinsOpeningBalanceTransaction(t){
+    return !!t && t.source==="Bluecoins" && (Number(t.sourceTypeId)===2 || String(t.category||t.sourceCategory||"").trim().toLowerCase()==="(new account)" || String(t.sourceParentCategory||"").trim().toLowerCase()==="(new account)");
+  }
+  function bluecoinsLiabilityAccount(account){
+    if(!account)return false;
+    const typeId=Number(account.sourceAccountTypeId);
+    if([2,8,9,10,11,13].includes(typeId))return true;
+    if([1,3,4,5,6,7,12,15,16].includes(typeId))return false;
+    const type=String(account.type||"").toLowerCase(),name=String(account.name||"").toLowerCase();
+    return /credit|liabilit|loan|payable|mortgage/.test(type) || /\b(cc|zip|paylater|postpaid)\b/.test(name);
+  }
+  function migrateBluecoinsOpeningBalances(state){
+    if(!state||!Array.isArray(state.transactions))return {migrated:0,amount:0};
+    state.accounts=Array.isArray(state.accounts)?state.accounts:[];
+    let migrated=0,total=0;
+    const keep=[];
+    for(const t of state.transactions){
+      if(!isBluecoinsOpeningBalanceTransaction(t)){keep.push(t);continue;}
+      const account=state.accounts.find(a=>String(a.id)===String(t.accountId)) || state.accounts.find(a=>String(a.name||"").trim().toLowerCase()===String(t.account||"").trim().toLowerCase());
+      if(!account){keep.push(t);continue;}
+      const amount=Math.abs(toNum(t.amount));
+      const raw=t.sourceAmountRaw!==undefined?toNum(t.sourceAmountRaw):0;
+      const signed=raw!==0?Math.sign(raw)*amount:amount;
+      account.openingBalance=toNum(account.openingBalance)+signed;
+      account.bluecoinsOpeningBalanceSourceIds=Array.isArray(account.bluecoinsOpeningBalanceSourceIds)?account.bluecoinsOpeningBalanceSourceIds:[];
+      if(t.sourceId!==undefined&&t.sourceId!==null)account.bluecoinsOpeningBalanceSourceIds.push(String(t.sourceId));
+      migrated++;total+=amount;
+    }
+    state.transactions=keep;
+    if(migrated)state.bluecoinsMeta={...(state.bluecoinsMeta||{}),openingBalanceMigration:{migrated,amount:total,at:new Date().toISOString()}};
+    return {migrated,amount:total};
+  }
   function removeImportedBluecoinsMfReminders(state){
     if(!state||!Array.isArray(state.transactions))return 0;
     const before=state.transactions.length;
@@ -162,25 +214,29 @@
     state.accounts=Array.isArray(state.accounts)?state.accounts:[];state.transactions=Array.isArray(state.transactions)?state.transactions:[];
     const accountMap=new Map();let accountsAdded=0;
     for(const src of payload.accounts){const sourceId=src.accountsTableID;if(sourceId===-1||sourceId===0)continue;let a=state.accounts.find(x=>String(x.sourceId)===String(sourceId))||state.accounts.find(x=>!x.sourceId&&String(x.name||"").toLowerCase()===String(src.accountName||"").toLowerCase());
-      if(!a){const typeMap={3:"Bank",4:"Wallet",5:"Credit card",6:"Investment",2:"Cash"};a={id:makeId(),sourceId,name:src.accountName||"Imported account",type:typeMap[src.accountTypeID]||"Other",openingBalance:0,closed:false,source:"Bluecoins"};state.accounts.push(a);accountsAdded++;}else{a.sourceId=sourceId;if(!a.name)a.name=src.accountName||"Imported account";}
+      if(!a){const typeMap={1:"Other",2:"Liability",3:"Bank",4:"Wallet",5:"Investment",6:"Other",7:"Other",8:"Credit card",9:"Loan",10:"Payable",11:"Mortgage",12:"Other",13:"Liability",15:"Other",16:"Other"};a={id:makeId(),sourceId,name:src.accountName||"Imported account",type:typeMap[src.accountTypeID]||"Other",sourceAccountTypeId:Number(src.accountTypeID)||null,openingBalance:0,closed:false,source:"Bluecoins"};state.accounts.push(a);accountsAdded++;}else{a.sourceId=sourceId;a.sourceAccountTypeId=Number(src.accountTypeID)||a.sourceAccountTypeId||null;if(!a.name)a.name=src.accountName||"Imported account";}
       accountMap.set(String(sourceId),a);
     }
     const known=new Set(state.transactions.filter(t=>t.source==="Bluecoins"&&t.sourceId!==undefined).map(t=>String(t.sourceId)));
-    let transactionsAdded=0,duplicates=0;
+    for(const a of state.accounts)for(const sourceId of (a.bluecoinsOpeningBalanceSourceIds||[]))known.add(String(sourceId));
+    let transactionsAdded=0,openingBalancesImported=0,duplicates=0;
     for(const src of payload.transactions){const sourceId=src.sourceId??src.source?.transactionsTableID;
       // Bluecoins' recurring MF reminder series is intentionally not migrated.
       // My Wealth will provide native recurring reminders in a future release.
       const isExcludedMfReminder=!!src.isReminder&&String(src.category||"").trim().toLowerCase()==="investment (buy)"&&String(src.account||"").trim().toLowerCase()==="sbi"&&String(src.note||src.description||src.notes||"").trim().toLowerCase()==="mf";
       if(isExcludedMfReminder){duplicates++;continue;}
       if(sourceId!==undefined&&known.has(String(sourceId))){duplicates++;continue;}
-      const kind=["Income","Expense","Transfer"].includes(src.type)?src.type:"Expense",from=accountMap.get(String(src.accountId)),to=accountMap.get(String(src.counterAccountId));
-      const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/10000;
+      const from=accountMap.get(String(src.accountId));
+      const isOpening=String(src.type||"").trim().toLowerCase()==="new account"||Number(src.transactionTypeID??src.source?.transactionTypeID)===2||String(src.category||"").trim().toLowerCase()==="(new account)";
+      if(isOpening&&from){const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/(Number(payload.amountScale)||1000000);from.openingBalance=toNum(from.openingBalance)+(sourceAmountRaw!==0?Math.sign(sourceAmountRaw)*amount:0);from.bluecoinsOpeningBalanceSourceIds=Array.isArray(from.bluecoinsOpeningBalanceSourceIds)?from.bluecoinsOpeningBalanceSourceIds:[];if(sourceId!==undefined)from.bluecoinsOpeningBalanceSourceIds.push(String(sourceId));if(sourceId!==undefined)known.add(String(sourceId));openingBalancesImported++;continue;}
+      const kind=["Income","Expense","Transfer"].includes(src.type)?src.type:"Expense",to=accountMap.get(String(src.counterAccountId));
+      const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/(Number(payload.amountScale)||1000000);
       const tx={id:makeId(),source:"Bluecoins",sourceId:sourceId??null,sourceAmountRaw,amountScaleCorrected:true,date:src.date||"",amount,kind,category:kind==="Transfer"?"Self transfer":(src.category||"Imported"),note:[src.description,src.notes].filter(Boolean).join(" · "),accountId:from?.id||null,account:from?.name||src.account||"",counterAccountId:kind==="Transfer"?(to?.id||null):null,counterAccount:kind==="Transfer"?(to?.name||src.counterAccount||""):"",transferGroupId:src.transferGroupId||null,isReminder:!!src.isReminder,deletedFlag:src.deletedFlag,labels:Array.isArray(src.labels)?src.labels:[],sourceCategory:src.category||"",sourceParentCategory:src.parentCategory||"",sourceTransferGroupId:src.transferGroupId||null,sourceTypeId:src.source?.transactionTypeID??null,sourceStatus:src.source?.status??null,sourceAccountReference:src.source?.accountReference??null,sourceTransactionCurrency:src.currency||src.source?.transactionCurrency||"INR",sourceConversionRate:src.source?.conversionRateNew??1,reminderMeta:src.isReminder?{frequency:src.source?.reminderFrequency??null,repeatEvery:src.source?.reminderRepeatEvery??null,endingType:src.source?.reminderEndingType??null,startDate:src.source?.reminderStartDate??null,endDate:src.source?.reminderEndDate??null}:null};
       state.transactions.push(tx);if(sourceId!==undefined)known.add(String(sourceId));transactionsAdded++;
     }
     state.bluecoinsCategoryTree=payload.categories||state.bluecoinsCategoryTree||null;state.bluecoinsReferenceData=payload.referenceData||state.bluecoinsReferenceData||null;
-    state.bluecoinsMeta={...(state.bluecoinsMeta||{}),source:payload.source||"Bluecoins",importedAt:new Date().toISOString(),lastImport:{accountsAdded,transactionsAdded,duplicates,sourceCount:payload.transactions.length}};
-    return {accountsAdded,transactionsAdded,duplicates,sourceCount:payload.transactions.length};
+    state.bluecoinsMeta={...(state.bluecoinsMeta||{}),source:payload.source||"Bluecoins",importedAt:new Date().toISOString(),lastImport:{accountsAdded,transactionsAdded,openingBalancesImported,duplicates,sourceCount:payload.transactions.length}};
+    return {accountsAdded,transactionsAdded,openingBalancesImported,duplicates,sourceCount:payload.transactions.length};
   }
   function upsertEcasImport(state,parsed,makeId){
     state.investments=Array.isArray(state.investments)?state.investments:[];state.investmentTransactions=Array.isArray(state.investmentTransactions)?state.investmentTransactions:[];state.investmentSnapshots=Array.isArray(state.investmentSnapshots)?state.investmentSnapshots:[];
@@ -193,5 +249,5 @@
     state.ecasMeta={casId:parsed.casId,date:parsed.date,summary:parsed.summary,checks:parsed.checks,importedAt:new Date().toISOString()};
     return {added,updated,transactions:parsed.investmentTransactions.length,snapshots:parsed.historical.length};
   }
-  return {findHistoricalTransferCandidates,reconcileTransferPair,undoTransferReconciliation,accountBalance,applyInvestmentTransaction,parseEcasText,upsertEcasImport,upsertBluecoinsImport,removeImportedBluecoinsMfReminders,parseCasDate};
+  return {findHistoricalTransferCandidates,reconcileTransferPair,undoTransferReconciliation,accountBalance,applyInvestmentTransaction,parseEcasText,upsertEcasImport,upsertBluecoinsImport,removeImportedBluecoinsMfReminders,migrateBluecoinsOpeningBalances,parseCasDate};
 });
