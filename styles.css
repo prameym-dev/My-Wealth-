@@ -717,3 +717,64 @@ body.reminders-page-mode .topbar .top-context-title[hidden]{display:none!importa
   background:transparent!important;
 }
 #bulkToolbar .bulk-actions .danger-btn{color:#b5423f!important}
+
+
+/* Build 21: Activity month picker, compact selection toolbar and visual cleanup */
+.activity-month-row{grid-template-columns:30px minmax(0,1fr) 30px minmax(118px,34%)!important;gap:5px!important}
+.activity-month-picker-trigger{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;min-width:0!important;height:42px!important;padding:0 5px!important;
+  border:0!important;background:transparent!important;color:var(--forest)!important;
+  font:inherit!important;font-weight:800!important;white-space:nowrap!important;
+}
+.activity-month-picker-input{
+  position:absolute!important;width:1px!important;height:1px!important;opacity:.01!important;
+  pointer-events:none!important;left:50%!important;top:0!important;
+}
+#bulkToolbar{
+  bottom:calc(70px + env(safe-area-inset-bottom) + 1px)!important;
+  background:#e4f1e9!important;border-color:#c9dfd2!important;
+  box-shadow:0 4px 12px #0c2e2018!important;
+}
+#bulkToolbar .bulk-actions{min-height:35px!important;padding:1px 3px!important;background:#e4f1e9!important}
+#bulkToolbar .bulk-actions button{min-height:34px!important;padding:1px 2px!important;background:transparent!important}
+#bulkToolbar .bulk-selection-head{min-height:32px!important;height:32px!important}
+#bulkToolbar #selectedTxTotal{font-size:11px!important}
+
+.activity-month-label-wrap{
+  position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;min-width:0!important;height:42px!important;overflow:hidden!important;
+}
+.activity-month-label-wrap #activityMonthLabel{
+  display:block!important;margin:0!important;text-align:center!important;white-space:nowrap!important;
+  pointer-events:none!important;
+}
+.activity-month-label-wrap .activity-month-picker-input{
+  position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+  opacity:.01!important;pointer-events:auto!important;z-index:2!important;
+}
+
+
+/* Build 22: remove the full-width Activity month/action panel */
+.activity-month-row{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  padding:0!important;
+  margin:0 0 10px!important;
+  min-height:44px!important;
+}
+/* Keep only the individual controls visibly surfaced */
+.activity-month-row>button:not(.activity-add-btn){
+  background:var(--surface,#fff)!important;
+  border:1px solid var(--line)!important;
+}
+.activity-month-row .activity-month-label-wrap{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.activity-month-row .activity-add-btn{
+  box-shadow:none!important;
+}
