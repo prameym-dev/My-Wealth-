@@ -37,6 +37,10 @@ async function initStorage(){
    await dbPut("app-state",legacy);
    state=legacy;
  }
+ // Remove the imported Bluecoins MF reminder series only. Completed MF expenses,
+ // balances, accounts, and all unrelated reminders/transactions remain untouched.
+ const removedMfReminders=MyWealthCore.removeImportedBluecoinsMfReminders(state);
+ if(removedMfReminders>0)await dbPut("app-state",state);
  try{localStorage.setItem("mywealth-storage-mode","indexeddb-v1");}catch{}
  return true;
 }

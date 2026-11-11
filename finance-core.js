@@ -151,6 +151,12 @@
   }
   function firstFrom(s,re){const m=String(s||"").match(re);return m?m[1]:null;}
   function parseCasDate(s){const m=String(s).match(/(\d{2})-([A-Za-z]{3}|\d{2})-(\d{4})/);if(!m)return new Date().toISOString().slice(0,10);const months={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};const mo=/^\d{2}$/.test(m[2])?Number(m[2]):months[m[2]];return `${m[3]}-${String(mo).padStart(2,"0")}-${m[1]}`;}
+  function removeImportedBluecoinsMfReminders(state){
+    if(!state||!Array.isArray(state.transactions))return 0;
+    const before=state.transactions.length;
+    state.transactions=state.transactions.filter(t=>!(t.source==="Bluecoins"&&t.isReminder===true&&String(t.category||t.sourceCategory||"").trim().toLowerCase()==="investment (buy)"&&String(t.account||"").trim().toLowerCase()==="sbi"&&String(t.note||"").trim().toLowerCase()==="mf"));
+    return before-state.transactions.length;
+  }
   function upsertBluecoinsImport(state,payload,makeId){
     if(!payload||!Array.isArray(payload.transactions)||!Array.isArray(payload.accounts))throw Error("This is not a supported My Wealth Bluecoins migration JSON.");
     state.accounts=Array.isArray(state.accounts)?state.accounts:[];state.transactions=Array.isArray(state.transactions)?state.transactions:[];
@@ -161,7 +167,12 @@
     }
     const known=new Set(state.transactions.filter(t=>t.source==="Bluecoins"&&t.sourceId!==undefined).map(t=>String(t.sourceId)));
     let transactionsAdded=0,duplicates=0;
-    for(const src of payload.transactions){const sourceId=src.sourceId??src.source?.transactionsTableID;if(sourceId!==undefined&&known.has(String(sourceId))){duplicates++;continue;}
+    for(const src of payload.transactions){const sourceId=src.sourceId??src.source?.transactionsTableID;
+      // Bluecoins' recurring MF reminder series is intentionally not migrated.
+      // My Wealth will provide native recurring reminders in a future release.
+      const isExcludedMfReminder=!!src.isReminder&&String(src.category||"").trim().toLowerCase()==="investment (buy)"&&String(src.account||"").trim().toLowerCase()==="sbi"&&String(src.note||src.description||src.notes||"").trim().toLowerCase()==="mf";
+      if(isExcludedMfReminder){duplicates++;continue;}
+      if(sourceId!==undefined&&known.has(String(sourceId))){duplicates++;continue;}
       const kind=["Income","Expense","Transfer"].includes(src.type)?src.type:"Expense",from=accountMap.get(String(src.accountId)),to=accountMap.get(String(src.counterAccountId));
       const sourceAmountRaw=toNum(src.amount),amount=Math.abs(sourceAmountRaw)/10000;
       const tx={id:makeId(),source:"Bluecoins",sourceId:sourceId??null,sourceAmountRaw,amountScaleCorrected:true,date:src.date||"",amount,kind,category:kind==="Transfer"?"Self transfer":(src.category||"Imported"),note:[src.description,src.notes].filter(Boolean).join(" · "),accountId:from?.id||null,account:from?.name||src.account||"",counterAccountId:kind==="Transfer"?(to?.id||null):null,counterAccount:kind==="Transfer"?(to?.name||src.counterAccount||""):"",transferGroupId:src.transferGroupId||null,isReminder:!!src.isReminder,deletedFlag:src.deletedFlag,labels:Array.isArray(src.labels)?src.labels:[],sourceCategory:src.category||"",sourceParentCategory:src.parentCategory||"",sourceTransferGroupId:src.transferGroupId||null,sourceTypeId:src.source?.transactionTypeID??null,sourceStatus:src.source?.status??null,sourceAccountReference:src.source?.accountReference??null,sourceTransactionCurrency:src.currency||src.source?.transactionCurrency||"INR",sourceConversionRate:src.source?.conversionRateNew??1,reminderMeta:src.isReminder?{frequency:src.source?.reminderFrequency??null,repeatEvery:src.source?.reminderRepeatEvery??null,endingType:src.source?.reminderEndingType??null,startDate:src.source?.reminderStartDate??null,endDate:src.source?.reminderEndDate??null}:null};
@@ -182,5 +193,5 @@
     state.ecasMeta={casId:parsed.casId,date:parsed.date,summary:parsed.summary,checks:parsed.checks,importedAt:new Date().toISOString()};
     return {added,updated,transactions:parsed.investmentTransactions.length,snapshots:parsed.historical.length};
   }
-  return {findHistoricalTransferCandidates,reconcileTransferPair,undoTransferReconciliation,accountBalance,applyInvestmentTransaction,parseEcasText,upsertEcasImport,upsertBluecoinsImport,parseCasDate};
+  return {findHistoricalTransferCandidates,reconcileTransferPair,undoTransferReconciliation,accountBalance,applyInvestmentTransaction,parseEcasText,upsertEcasImport,upsertBluecoinsImport,removeImportedBluecoinsMfReminders,parseCasDate};
 });
