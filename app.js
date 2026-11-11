@@ -408,7 +408,7 @@ $("confirmBluecoinsBtn").onclick=async()=>{if(!pendingBluecoins)return;if(!confi
 function openTransactionDetail(txid){const t=state.transactions.find(x=>String(x.id)===String(txid));if(!t)return;activeDetailTransactionId=t.id;$("detailTitle").textContent=t.category||t.kind;$("transactionDetailBody").innerHTML=`<div class="detail-grid"><p><small>Date</small><strong>${esc(t.date||"—")}</strong></p><p><small>Amount</small><strong>${money(t.amount)}</strong></p><p><small>Type</small><strong>${esc(t.kind)}</strong></p><p><small>Account</small><strong>${esc(t.account||"Unassigned")}${t.kind==="Transfer"?" → "+esc(t.counterAccount||"Unassigned"):""}</strong></p><p><small>Category</small><strong>${esc(t.category||"—")}</strong></p><p><small>Description</small><strong>${esc(t.note||"—")}</strong></p></div>`;showDialog("transactionDetailDialog");}
 function editOrCopyTransaction(copy=false){const t=state.transactions.find(x=>String(x.id)===String(activeDetailTransactionId));if(!t)return;editingTransactionId=copy?null:t.id;currentKind=t.kind==="Income"?"Income":t.kind==="Transfer"?"Transfer":"Expense";$("entryTitle").textContent=copy?"Copy transaction":"Edit transaction";$("saveEntryBtn").textContent=copy?"Save copy":"Save changes";$("transactionForm").reset();$("entryAmount").value=t.amount;$("entryDate").value=copy?new Date().toISOString().slice(0,10):t.date;options($("entryCategory"),getCategories(currentKind),t.category);$("entryNote").value=t.note||"";refreshAccountSelect();$("entryAccount").value=t.accountId||"";$("entryRecurring").checked=!!t.recurring;setTransactionKind(currentKind);$("entryToAccount").value=t.counterAccountId||"";$("transactionDetailDialog").close();showDialog("entryDialog");}
 $("detailEditBtn").onclick=()=>editOrCopyTransaction(false);$("detailCopyBtn").onclick=()=>editOrCopyTransaction(true);$("detailDeleteBtn").onclick=async()=>{if(!activeDetailTransactionId||!confirm("Delete this transaction?"))return;state.transactions=state.transactions.filter(t=>String(t.id)!==String(activeDetailTransactionId));$("transactionDetailDialog").close();await persist();toast("Transaction deleted");};
-function updateBulkToolbar(){const n=selectedTransactionIds.size;const selected=state.transactions.filter(t=>selectedTransactionIds.has(String(t.id)));const net=selected.reduce((sum,t)=>sum+(Number(t.amount)||0),0);const total=Math.abs(net);$("selectedTxCount").textContent=`${n} selected`;$("selectedTxTotal").textContent=`Total ${money(total)}`;$("bulkToolbar").classList.toggle("has-selection",n>0);if($("selectAllTx"))$("selectAllTx").checked=n>0&&n===$$("[data-select-tx]").length;}
+function updateBulkToolbar(){const n=selectedTransactionIds.size;const selected=state.transactions.filter(t=>selectedTransactionIds.has(String(t.id)));const net=selected.reduce((sum,t)=>{const amount=Math.abs(Number(t.amount)||0);if(t.kind==="Expense")return sum+amount;if(t.kind==="Income")return sum-amount;return sum;},0);const total=Math.abs(net);$("selectedTxCount").textContent=`${n} selected`;$("selectedTxTotal").textContent=`Total ${money(total)}`;$("bulkToolbar").classList.toggle("has-selection",n>0);if($("selectAllTx"))$("selectAllTx").checked=n>0&&n===$$("[data-select-tx]").length;}
 function $$(sel){return [...document.querySelectorAll(sel)];}
 $("selectAllTx").onchange=()=>{$$("[data-select-tx]").forEach(c=>{c.checked=$("selectAllTx").checked;const k=String(c.dataset.selectTx);c.checked?selectedTransactionIds.add(k):selectedTransactionIds.delete(k);});updateBulkToolbar();};
 $("deselectAllTx").onclick=()=>{selectedTransactionIds.clear();$$("[data-select-tx]").forEach(c=>c.checked=false);updateBulkToolbar();};
@@ -516,3 +516,69 @@ if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigato
 document.addEventListener('click',e=>{
   const add=e.target.closest('#addReminderBtn');if(add){handleAddReminderClick(e);return;}
 });
+
+
+// Build 24: device-local biometric/passkey gate. The authenticator enforces user verification.
+const BIOMETRIC_ENABLED_KEY="mywealth-biometric-enabled";
+const BIOMETRIC_CREDENTIAL_KEY="mywealth-biometric-credential";
+function bytesToBase64Url(bytes){let s="";for(const b of new Uint8Array(bytes))s+=String.fromCharCode(b);return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");}
+function base64UrlToBytes(value){const s=String(value).replace(/-/g,"+").replace(/_/g,"/");const raw=atob(s+"=".repeat((4-s.length%4)%4));return Uint8Array.from(raw,c=>c.charCodeAt(0));}
+function biometricSupported(){return !!(window.isSecureContext&&navigator.credentials&&window.PublicKeyCredential&&crypto?.getRandomValues);}
+function randomChallenge(){const a=new Uint8Array(32);crypto.getRandomValues(a);return a;}
+function setBiometricLocked(locked){document.documentElement.classList.toggle("biometric-locked",locked);const overlay=$("biometricLock");if(overlay)overlay.hidden=!locked;}
+async function createBiometricCredential(){
+  if(!biometricSupported())throw new Error("Biometric unlock requires HTTPS and a browser with passkey support.");
+  const userId=randomChallenge();
+  const credential=await navigator.credentials.create({publicKey:{
+    challenge:randomChallenge(),rp:{name:"My Wealth",id:location.hostname},
+    user:{id:userId,name:"my-wealth-local-user",displayName:"My Wealth"},
+    pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+    authenticatorSelection:{authenticatorAttachment:"platform",residentKey:"preferred",userVerification:"required"},
+    timeout:60000,attestation:"none"
+  }});
+  if(!credential?.rawId)throw new Error("Your device did not create a passkey credential.");
+  localStorage.setItem(BIOMETRIC_CREDENTIAL_KEY,bytesToBase64Url(credential.rawId));
+  return true;
+}
+async function authenticateBiometric(){
+  if(!biometricSupported())throw new Error("Passkey authentication is not available in this browser.");
+  const idValue=localStorage.getItem(BIOMETRIC_CREDENTIAL_KEY);
+  if(!idValue)throw new Error("No biometric credential is registered on this device.");
+  const assertion=await navigator.credentials.get({publicKey:{
+    challenge:randomChallenge(),allowCredentials:[{type:"public-key",id:base64UrlToBytes(idValue)}],
+    userVerification:"required",timeout:60000
+  }});
+  const authData=assertion?.response?.authenticatorData;
+  if(!authData||authData.byteLength<33||(new Uint8Array(authData)[32]&0x04)===0)throw new Error("Device verification was not confirmed. Try again.");
+  return true;
+}
+async function enableBiometricUnlock(){
+  const toggle=$("biometricUnlockToggle"),disable=$("disableBiometricBtn");
+  try{
+    if(!biometricSupported())throw new Error("This browser does not support device passkeys. Open My Wealth over HTTPS in a supported browser.");
+    if(!localStorage.getItem(BIOMETRIC_CREDENTIAL_KEY))await createBiometricCredential();
+    await authenticateBiometric();
+    localStorage.setItem(BIOMETRIC_ENABLED_KEY,"1");
+    if(toggle)toggle.checked=true;if(disable)disable.hidden=false;
+    toast("Biometric unlock enabled");
+  }catch(err){
+    localStorage.removeItem(BIOMETRIC_ENABLED_KEY);
+    if(toggle)toggle.checked=false;
+    toast(err?.name==="NotAllowedError"?"Biometric setup was cancelled or not completed":(err.message||"Could not enable biometric unlock"));
+  }
+}
+async function unlockBiometric(){
+  const button=$("biometricUnlockBtn"),status=$("biometricLockStatus");
+  if(button)button.disabled=true;if(status)status.textContent="Waiting for device verification…";
+  try{await authenticateBiometric();setBiometricLocked(false);if(status)status.textContent="";}catch(err){if(status)status.textContent=err?.name==="NotAllowedError"?"Verification was cancelled. Try again.":(err.message||"Unlock failed");}
+  finally{if(button)button.disabled=false;}
+}
+if($("biometricUnlockToggle")){
+  $("biometricUnlockToggle").checked=localStorage.getItem(BIOMETRIC_ENABLED_KEY)==="1";
+  $("disableBiometricBtn").hidden=!$("biometricUnlockToggle").checked;
+  $("biometricUnlockToggle").onchange=async()=>{if($("biometricUnlockToggle").checked){await enableBiometricUnlock();}else{if(confirm("Disable biometric unlock on this device?")){localStorage.removeItem(BIOMETRIC_ENABLED_KEY);localStorage.removeItem(BIOMETRIC_CREDENTIAL_KEY);$("disableBiometricBtn").hidden=true;toast("Biometric unlock disabled");}else $("biometricUnlockToggle").checked=true;}};
+  $("disableBiometricBtn").onclick=()=>{if(confirm("Disable biometric unlock on this device?")){$("biometricUnlockToggle").checked=false;localStorage.removeItem(BIOMETRIC_ENABLED_KEY);localStorage.removeItem(BIOMETRIC_CREDENTIAL_KEY);$("disableBiometricBtn").hidden=true;toast("Biometric unlock disabled");}};
+}
+if($("biometricUnlockBtn"))$("biometricUnlockBtn").onclick=unlockBiometric;
+if(localStorage.getItem(BIOMETRIC_ENABLED_KEY)==="1")setBiometricLocked(true);
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&localStorage.getItem(BIOMETRIC_ENABLED_KEY)==="1")setBiometricLocked(true);});

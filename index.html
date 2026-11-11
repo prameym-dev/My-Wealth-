@@ -6,11 +6,15 @@
   <meta name="theme-color" content="#102a26">
   <meta name="description" content="My Wealth — personal finance and portfolio tracker">
   <title>My Wealth</title>
+  <script>try{if(localStorage.getItem("mywealth-biometric-enabled")==="1")document.documentElement.classList.add("biometric-locked");}catch(e){}</script>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div id="biometricLock" class="biometric-lock" hidden>
+    <div class="biometric-lock-card"><div class="brand-mark">MW</div><h1>My Wealth is locked</h1><p>Unlock to view your financial information.</p><button id="biometricUnlockBtn" class="primary-btn" type="button">Unlock with Face ID / device verification</button><p id="biometricLockStatus" class="hint" role="status"></p></div>
+  </div>
   <div class="app-shell">
     <header class="topbar">
       <div class="brand"><div class="brand-mark">MW</div><div><strong>MY WEALTH</strong><small>Personal finance</small></div></div>
@@ -57,7 +61,7 @@
       <section id="wealth" class="page">
         <div class="wealth-heading"><p class="eyebrow">YOUR FINANCIAL OVERVIEW</p></div>
         <article class="wealth-hero"><div class="wealth-hero-top"><span>Total Financial Wealth</span><span class="wealth-live-dot">●</span></div><strong id="wealthFinancialTotal">₹0</strong><small>Investments + account balances</small><div class="wealth-hero-bottom"><span>Net worth</span><b id="wealthNet">₹0</b></div></article>
-        <div class="section-heading wealth-section-heading"><h2>Investments</h2><div class="button-row"><label class="secondary-btn small file-button">Import CSV / Excel<input type="file" id="wealthFileInput" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"></label><button class="secondary-btn small" id="wealthTemplateBtn" type="button">Template</button><button class="secondary-btn small" id="importCasBtn" type="button">Import eCAS</button></div></div><div id="wealthImportPreview" class="hint" hidden></div><button class="primary-btn settings-action-wide" id="confirmWealthImportBtn" type="button" hidden disabled>Confirm holdings import</button>
+        <div class="section-heading wealth-section-heading"><h2>Investments</h2></div>
         <div class="investment-grid" id="investmentCategoryGrid">
           <button class="investment-tile" data-investment-category="Mutual Funds"><span>◈</span><strong>Mutual Funds</strong><b id="mfValue">₹0</b><small id="mfCount">0 holdings</small></button>
           <button class="investment-tile" data-investment-category="Stocks"><span>↗</span><strong>Stocks</strong><b id="stockValue">₹0</b><small id="stockCount">0 holdings</small></button>
@@ -122,6 +126,11 @@
             <label class="setting-row"><span><i class="setting-icon">▣</i>Display Mode</span><select id="themeSelect"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
             <label class="setting-row"><span><i class="setting-icon">◉</i>Accent Colour</span><select id="accentSelect"><option value="green">Green</option><option value="blue">Blue</option><option value="teal">Teal</option><option value="purple">Purple</option><option value="orange">Orange</option></select></label>
           </section>
+          <section class="settings-group"><h2>Security</h2>
+            <label class="setting-row"><span><i class="setting-icon">◉</i>Biometric unlock <small>Face ID / Touch ID where supported</small></span><input type="checkbox" id="biometricUnlockToggle" aria-label="Enable biometric unlock"></label>
+            <p class="hint">Uses your device's passkey authenticator and requires biometric or device verification when available. This app-level lock does not encrypt your stored finance database.</p>
+            <button class="secondary-btn settings-action-wide" id="disableBiometricBtn" type="button" hidden>Disable biometric unlock</button>
+          </section>
           <section class="settings-group"><h2>Data</h2>
             <button class="setting-link" id="backupRestoreBtn" type="button"><span><i class="setting-icon">☁</i>Cloud backup &amp; restore</span><b>›</b></button>
             <button class="setting-link" id="importDataBtn" type="button"><span><i class="setting-icon">⇩</i>Import data</span><b>›</b></button>
@@ -133,14 +142,30 @@
             <button class="setting-link" id="settingsAccountsBtn" type="button"><span><i class="setting-icon">▤</i>Accounts</span><b>›</b></button>
             <button class="setting-link" id="settingsAboutBtn" type="button"><span><i class="setting-icon">ⓘ</i>About</span><b>›</b></button>
           </section>
-          <div class="version" id="appBuildNumber">MY WEALTH · BUILD 2026.11.11.21</div>
+          <div class="version" id="appBuildNumber">MY WEALTH · BUILD 2026.11.12.24</div>
         </div>
         <div id="cloudSettingsPage" class="settings-subpage" hidden>
           <section class="settings-group"><h2>Cloud backup &amp; restore</h2><p class="hint">Configure your private cloud connection, sign in, and synchronise or restore your data.</p><div id="cloudStatus" class="status-line">Not configured · Local-only mode</div><button class="setting-link" id="configureCloudBtn" type="button"><span>Configure cloud connection</span><b>›</b></button><button class="setting-link" id="loginBtn" type="button"><span>Sign in / create account</span><b>›</b></button><button class="primary-btn settings-action-wide" id="syncNowBtn" type="button">Sync now</button><label class="secondary-btn file-button settings-action-wide">Restore JSON backup<input type="file" id="restoreJsonInput" accept="application/json"></label></section>
         </div>
         <div id="importSettingsPage" class="settings-subpage" hidden>
-          <section class="settings-group"><h2>Import data</h2><p class="hint">Choose a source, review its preview, and confirm before records are added.</p><label class="secondary-btn file-button settings-action-wide">Choose Bluecoins JSON<input type="file" id="bluecoinsInput" accept=".json,application/json"></label><div id="bluecoinsPreview" class="hint">No Bluecoins file selected.</div><button class="primary-btn settings-action-wide" id="confirmBluecoinsBtn" disabled>Import Bluecoins history</button><button class="setting-link" id="importEcasFromSettings" type="button"><span>Import eCAS PDF</span><b>›</b></button><label class="secondary-btn file-button settings-action-wide">Import transactions CSV / Excel<input type="file" id="importCsvInput" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"></label><button class="secondary-btn settings-action-wide" id="transactionTemplateBtn" type="button">Download transaction template</button><div id="transactionImportPreview" class="hint" hidden></div><button class="primary-btn settings-action-wide" id="confirmTransactionImportBtn" type="button" hidden disabled>Confirm transaction import</button></section>
+          <section class="settings-group"><h2>Transaction import</h2><p class="hint">Import transaction history from Bluecoins or a spreadsheet. Review the preview before confirming.</p>
+            <label class="secondary-btn file-button settings-action-wide">Choose Bluecoins JSON<input type="file" id="bluecoinsInput" accept=".json,application/json"></label>
+            <div id="bluecoinsPreview" class="hint">No Bluecoins file selected.</div>
+            <button class="primary-btn settings-action-wide" id="confirmBluecoinsBtn" disabled>Import Bluecoins history</button>
+            <label class="secondary-btn file-button settings-action-wide">Import transactions CSV / Excel<input type="file" id="importCsvInput" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"></label>
+            <button class="secondary-btn settings-action-wide" id="transactionTemplateBtn" type="button">Download transaction template</button>
+            <div id="transactionImportPreview" class="hint" hidden></div>
+            <button class="primary-btn settings-action-wide" id="confirmTransactionImportBtn" type="button" hidden disabled>Confirm transaction import</button>
+          </section>
+          <section class="settings-group"><h2>Investment import</h2><p class="hint">Import holdings from a spreadsheet or a CDSL eCAS statement. Review and reconcile before adding holdings.</p>
+            <label class="secondary-btn file-button settings-action-wide">Import investments CSV / Excel<input type="file" id="wealthFileInput" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"></label>
+            <button class="secondary-btn settings-action-wide" id="wealthTemplateBtn" type="button">Download investment template</button>
+            <div id="wealthImportPreview" class="hint" hidden></div>
+            <button class="primary-btn settings-action-wide" id="confirmWealthImportBtn" type="button" hidden disabled>Confirm holdings import</button>
+            <button class="secondary-btn settings-action-wide" id="importCasBtn" type="button">Import eCAS PDF</button>
+          </section>
         </div>
+
         <div id="exportSettingsPage" class="settings-subpage" hidden>
           <section class="settings-group"><h2>Export data</h2><p class="hint">Create a portable copy of your transactions or complete My Wealth data.</p><button class="primary-btn settings-action-wide" id="exportJsonBtn" type="button">Export full JSON backup</button><button class="secondary-btn settings-action-wide" id="exportCsvBtn" type="button">Export transactions CSV</button><button class="danger-btn settings-action-wide" id="clearDataBtn" type="button">Delete local data</button></section>
         </div>

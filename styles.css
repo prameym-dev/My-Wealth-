@@ -778,3 +778,17 @@ body.reminders-page-mode .topbar .top-context-title[hidden]{display:none!importa
 .activity-month-row .activity-add-btn{
   box-shadow:none!important;
 }
+
+
+/* Build 24: privacy lock and clearly separated import groups */
+.biometric-locked .app-shell{visibility:hidden!important;pointer-events:none!important}
+.biometric-lock{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:24px;background:var(--bg,#f3f7f4);color:var(--text,#183b32)}
+.biometric-lock[hidden]{display:none!important}
+.biometric-lock-card{width:min(100%,440px);padding:32px 24px;border:1px solid var(--border,#dce8e1);border-radius:24px;background:var(--card,#fff);text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.12)}
+.biometric-lock-card .brand-mark{margin:0 auto 22px}
+.biometric-lock-card h1{font-size:26px;margin:0 0 10px}
+.biometric-lock-card p{color:var(--muted,#82938b);line-height:1.5}
+.biometric-lock-card .primary-btn{width:100%;margin-top:18px;white-space:normal}
+#biometricLockStatus{min-height:20px}
+.settings-group .hint{line-height:1.5}
+#biometricUnlockToggle{width:22px;height:22px;accent-color:var(--accent,#176d54)}
