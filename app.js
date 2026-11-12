@@ -518,7 +518,7 @@ document.addEventListener('click',e=>{
 });
 
 
-// Build 24: device-local biometric/passkey gate. The authenticator enforces user verification.
+// Build 25: device-local biometric/passkey gate with automatic authentication. The authenticator enforces user verification.
 const BIOMETRIC_ENABLED_KEY="mywealth-biometric-enabled";
 const BIOMETRIC_CREDENTIAL_KEY="mywealth-biometric-credential";
 function bytesToBase64Url(bytes){let s="";for(const b of new Uint8Array(bytes))s+=String.fromCharCode(b);return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");}
@@ -580,5 +580,36 @@ if($("biometricUnlockToggle")){
   $("disableBiometricBtn").onclick=()=>{if(confirm("Disable biometric unlock on this device?")){$("biometricUnlockToggle").checked=false;localStorage.removeItem(BIOMETRIC_ENABLED_KEY);localStorage.removeItem(BIOMETRIC_CREDENTIAL_KEY);$("disableBiometricBtn").hidden=true;toast("Biometric unlock disabled");}};
 }
 if($("biometricUnlockBtn"))$("biometricUnlockBtn").onclick=unlockBiometric;
-if(localStorage.getItem(BIOMETRIC_ENABLED_KEY)==="1")setBiometricLocked(true);
-document.addEventListener("visibilitychange",()=>{if(document.hidden&&localStorage.getItem(BIOMETRIC_ENABLED_KEY)==="1")setBiometricLocked(true);});
+// Build 25: lock immediately on launch/background; auto-authenticate on launch and
+// when returning after the 30-second grace period. Short app switches stay seamless.
+let biometricHiddenAt=0,biometricAutoAttempt=false;
+async function attemptAutomaticBiometricUnlock(){
+  if(biometricAutoAttempt||localStorage.getItem(BIOMETRIC_ENABLED_KEY)!=="1")return;
+  biometricAutoAttempt=true;
+  const status=$("biometricLockStatus");
+  if(status)status.textContent="Authenticating with Face ID / device verification…";
+  try{await authenticateBiometric();setBiometricLocked(false);if(status)status.textContent="";}
+  catch(err){
+    if(status)status.textContent=err?.name==="NotAllowedError"?"Automatic verification was unavailable. Tap below to try again.":(err.message||"Automatic unlock failed. Tap below to retry.");
+  }finally{biometricAutoAttempt=false;}
+}
+if(localStorage.getItem(BIOMETRIC_ENABLED_KEY)==="1"){
+  setBiometricLocked(true);
+  // Defer until the initial page has painted; the lock overlay hides financial data meanwhile.
+  setTimeout(attemptAutomaticBiometricUnlock,250);
+}
+document.addEventListener("visibilitychange",()=>{
+  if(localStorage.getItem(BIOMETRIC_ENABLED_KEY)!=="1")return;
+  if(document.hidden){
+    biometricHiddenAt=Date.now();
+    setBiometricLocked(true);
+  }else{
+    const awayFor=biometricHiddenAt?Date.now()-biometricHiddenAt:Infinity;
+    biometricHiddenAt=0;
+    if(awayFor<30000){setBiometricLocked(false);}
+    else{setBiometricLocked(true);attemptAutomaticBiometricUnlock();}
+  }
+});
+window.addEventListener("pageshow",()=>{
+  if(localStorage.getItem(BIOMETRIC_ENABLED_KEY)==="1"&&document.visibilityState==="visible"&&document.documentElement.classList.contains("biometric-locked"))attemptAutomaticBiometricUnlock();
+});
